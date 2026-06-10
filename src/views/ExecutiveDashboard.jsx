@@ -393,50 +393,32 @@ export default function ExecutiveDashboard() {
             </div>
           </div>
 
-          <div className="p-4 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
-            {(metrics.details || []).map((area) => (
-              <AreaHeatCard
-                key={area.nombre}
-                area={area}
-                isSelected={selectedArea === area.nombre}
-                onClick={() => setSelectedArea(prev => prev === area.nombre ? null : area.nombre)}
-              />
-            ))}
-          </div>
+          <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {(() => {
+              const ramas = metrics.ramasEnriched || [];
 
-          {/* Selected area drill-down preview */}
-          {selectedArea && (() => {
-            const areaData = (metrics.details || []).find(a => a.nombre === selectedArea);
-            if (!areaData?.children?.length) return null;
-            return (
-              <div className="border-t border-brand-border px-5 py-4">
-                <div className="text-[10px] font-bold uppercase tracking-widest text-brand-text-muted mb-3">
-                  Sub-áreas de {selectedArea}
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {areaData.children.map((child) => {
-                    const cov = child.hcExpected > 0 ? (child.actualPresent / child.hcExpected) * 100 : 0;
-                    const st = getCoverageStatus(cov, false);
-                    const barCol = { success: 'bg-emerald-500', warning: 'bg-yellow-400', danger: 'bg-red-600' }[st];
-                    return (
-                      <div key={child.nombre} className="bg-brand-bg border border-brand-border rounded p-3 space-y-2">
-                        <div className="text-[10px] font-semibold text-brand-text-primary">{child.nombre}</div>
-                        <div className="flex justify-between text-[9px] text-brand-text-muted">
-                          <span>{child.actualPresent}/{child.hcExpected}</span>
-                          <span className={`font-bold ${st === 'danger' ? 'text-red-400' : st === 'warning' ? 'text-yellow-400' : 'text-emerald-400'}`}>
-                            {cov.toFixed(1)}%
-                          </span>
-                        </div>
-                        <div className="h-1 w-full bg-brand-border rounded-full">
-                          <div className={`h-full rounded-full ${barCol}`} style={{ width: `${Math.min(cov, 100)}%` }} />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })()}
+              // 3 subAreas of ASSEMBLY: ASSEMBLY w/ KF LOGS, KF LOGISTICS, ASSEMBLY INDIRECT
+              const assembly = ramas.find(r => r.id === 'assembly');
+              const assemblySubAreas = (assembly?.subAreas || []);
+
+              // FABRICATION as a single block (no drill-down here)
+              const fabrication = ramas.find(r => r.id === 'fabrication');
+
+              const heatCards = [
+                ...assemblySubAreas,
+                ...(fabrication ? [fabrication] : []),
+              ];
+
+              return heatCards.map((area) => (
+                <AreaHeatCard
+                  key={area.id || area.nombre}
+                  area={area}
+                  isSelected={selectedArea === area.nombre}
+                  onClick={() => setSelectedArea(prev => prev === area.nombre ? null : area.nombre)}
+                />
+              ));
+            })()}
+          </div>
         </div>
 
         {/* Risk Impact Table — occupies 2/5 */}
