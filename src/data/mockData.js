@@ -1,6 +1,6 @@
 import { HC_DESIGN_TOTAL } from './constants';
 
-export const HC_CONTRATADO = 1432;
+export const HC_CONTRATADO = 1504; 
 
 export const laborBuckets = [
   { id: 'fixed', label: 'Fixed Crews', descripcion: 'Plantillas fijas' },
@@ -18,9 +18,6 @@ export const laborBuckets = [
   { id: 'truck_log', label: 'Truck Logistics', descripcion: 'Movimientos en patio' },
 ];
 
-// ─────────────────────────────────────────────────────────────────
-// ESTRUCTURA LEGACY (Protege tus dashboards actuales para mantener los 1498 totales)
-// ─────────────────────────────────────────────────────────────────
 const LEGACY_AREAS = [
   { nombre: "Línea de Ensamble", hcDesign: 380, hcExpected: 380, actualPresent: 0, isCritical: true, children: [] },
   { nombre: "Ensambles Mayores", hcDesign: 250, hcExpected: 250, actualPresent: 0, isCritical: true, children: [] },
@@ -33,191 +30,248 @@ const LEGACY_AREAS = [
   { nombre: "Soporte / Facilities / Dir.", hcDesign: 70, hcExpected: 70, actualPresent: 0, isCritical: false, children: [] },
 ];
 
-// ─────────────────────────────────────────────────────────────────
-// ESTRUCTURA PROFUNDA (El código de 4 niveles para la nueva vista)
-// ─────────────────────────────────────────────────────────────────
 const RAMAS_TEMPLATE = [
   {
-    id: 'assembly', nombre: 'ASSEMBLY', hcDesign: 1164, hcExpected: 1164, actualPresent: 0, isCritical: true, /* [cite: 124] */
+    id: 'assembly', nombre: 'ASSEMBLY', hcDesign: 1164, hcExpected: 1164, actualPresent: 0, isCritical: true,
     subAreas: [
       {
-        id: 'assembly_kflogs', nombre: 'ASSEMBLY w/ KF LOGS', hcDesign: 853, hcExpected: 853, actualPresent: 0, isCritical: true, /* [cite: 124] */
+        id: 'assembly_kflogs', nombre: 'ASSEMBLY w/ KF LOGS', hcDesign: 853, hcExpected: 853, actualPresent: 0, isCritical: true,
         grupos: [
           {
-            id: 'lec', nombre: '+ LEC', hcDesign: 358, hcExpected: 358, actualPresent: 0, isCritical: true, /* [cite: 124] */
+            id: 'lec', nombre: '+ LEC', hcDesign: 358, hcExpected: 358, actualPresent: 0, isCritical: true,
             estaciones: [
               {
-                id: 'lec_i', nombre: '- LEC I', hcDesign: 214, hcExpected: 214, actualPresent: 0, /* [cite: 124, 125] */
+                id: 'lec_i', nombre: '- LEC I', hcDesign: 214, hcExpected: 214, actualPresent: 0,
                 children: [
-                  { nombre: '110 Frame I', hcDesign: 39, hcExpected: 39, actualPresent: 0 }, /* [cite: 125] */
-                  { nombre: '122 Frame II', hcDesign: 29, hcExpected: 29, actualPresent: 0 }, /* [cite: 125] */
-                  { nombre: '111 Valves', hcDesign: 38, hcExpected: 38, actualPresent: 0 }, /* [cite: 125] */
-                  { nombre: '112 Axles Set', hcDesign: 36, hcExpected: 36, actualPresent: 0 }, /* [cite: 125, 126] */
-                  { nombre: '119 Axles Trim', hcDesign: 46, hcExpected: 46, actualPresent: 0 }, /* [cite: 127] */
-                  { nombre: '48 Chassis Paint', hcDesign: 26, hcExpected: 26, actualPresent: 0 }, /* [cite: 127] */
+                  { nombre: '110 Frame I', hcDesign: 39, hcExpected: 39, actualPresent: 0 },
+                  { nombre: '122 Frame II', hcDesign: 29, hcExpected: 29, actualPresent: 0 },
+                  { nombre: '111 Valves', hcDesign: 38, hcExpected: 38, actualPresent: 0 },
+                  { nombre: '112 Axles Set', hcDesign: 36, hcExpected: 36, actualPresent: 0 },
+                  { nombre: '119 Axles Trim', hcDesign: 46, hcExpected: 46, actualPresent: 0 },
+                  { nombre: '48 Chassis Paint', hcDesign: 26, hcExpected: 26, actualPresent: 0 },
                 ]
               },
               {
-                id: 'lec_ii', nombre: '- LEC II', hcDesign: 144, hcExpected: 144, actualPresent: 0, /* [cite: 127] */
+                id: 'lec_ii', nombre: '- LEC II', hcDesign: 144, hcExpected: 144, actualPresent: 0,
                 children: [
-                  { nombre: '113 Engines Set', hcDesign: 34, hcExpected: 34, actualPresent: 0 }, /* [cite: 128] */
-                  { nombre: '120 Engines Trim', hcDesign: 27, hcExpected: 27, actualPresent: 0 }, /* [cite: 128] */
-                  { nombre: '121 Tanks Installation', hcDesign: 20, hcExpected: 20, actualPresent: 0 }, /* [cite: 128] */
-                  { nombre: '114 Cab Set', hcDesign: 26, hcExpected: 26, actualPresent: 0 }, /* [cite: 128, 129] */
-                  { nombre: '115 Hood Set', hcDesign: 18, hcExpected: 18, actualPresent: 0 }, /* [cite: 129, 130] */
-                  { nombre: '116 EOL', hcDesign: 19, hcExpected: 19, actualPresent: 0 }, /* [cite: 130] */
+                  { nombre: '113 Engines Set', hcDesign: 34, hcExpected: 34, actualPresent: 0 },
+                  { nombre: '120 Engines Trim', hcDesign: 27, hcExpected: 27, actualPresent: 0 },
+                  { nombre: '121 Tanks Installation', hcDesign: 20, hcExpected: 20, actualPresent: 0 },
+                  { nombre: '114 Cab Set', hcDesign: 26, hcExpected: 26, actualPresent: 0 },
+                  { nombre: '115 Hood Set', hcDesign: 18, hcExpected: 18, actualPresent: 0 },
+                  { nombre: '116 EOL', hcDesign: 19, hcExpected: 19, actualPresent: 0 },
                 ]
               }
             ]
           },
           {
-            id: 'lem', nombre: '+ LEM', hcDesign: 306, hcExpected: 306, actualPresent: 0, isCritical: true, /* [cite: 130] */
+            id: 'lem', nombre: '+ LEM', hcDesign: 306, hcExpected: 306, actualPresent: 0, isCritical: true,
             estaciones: [
               {
-                id: 'lem_i', nombre: '- LEM I', hcDesign: 162, hcExpected: 162, actualPresent: 0, /* [cite: 130] */
+                id: 'lem_i', nombre: '- LEM I', hcDesign: 162, hcExpected: 162, actualPresent: 0,
                 children: [
-                  { nombre: '36 Cab Build', hcDesign: 0, hcExpected: 0, actualPresent: 0 }, /* [cite: 130, 131] */
-                  { nombre: '40 NGP Build', hcDesign: 34, hcExpected: 34, actualPresent: 0 }, /* [cite: 131] */
-                  { nombre: '37 Sleeper Build', hcDesign: 0, hcExpected: 0, actualPresent: 0 }, /* [cite: 131] */
-                  { nombre: '32 Cab Build 320', hcDesign: 20, hcExpected: 20, actualPresent: 0 }, /* [cite: 131] */
-                  { nombre: '38 Paint Prep', hcDesign: 26, hcExpected: 26, actualPresent: 0 }, /* [cite: 132] */
-                  { nombre: '33 Main Paint', hcDesign: 36, hcExpected: 36, actualPresent: 0 }, /* [cite: 132, 133] */
-                  { nombre: '34 Miscellaneous', hcDesign: 46, hcExpected: 46, actualPresent: 0 }, /* [cite: 133] */
+                  { nombre: '36 Cab Build', hcDesign: 0, hcExpected: 0, actualPresent: 0 },
+                  { nombre: '40 NGP Build', hcDesign: 34, hcExpected: 34, actualPresent: 0 },
+                  { nombre: '37 Sleeper Build', hcDesign: 0, hcExpected: 0, actualPresent: 0 },
+                  { nombre: '32 Cab Build 320', hcDesign: 20, hcExpected: 20, actualPresent: 0 },
+                  { nombre: '38 Paint Prep', hcDesign: 26, hcExpected: 26, actualPresent: 0 },
+                  { nombre: '33 Main Paint', hcDesign: 36, hcExpected: 36, actualPresent: 0 },
+                  { nombre: '34 Miscellaneous', hcDesign: 46, hcExpected: 46, actualPresent: 0 },
                 ]
               },
               {
-                id: 'lem_ii', nombre: '- LEM II', hcDesign: 144, hcExpected: 144, actualPresent: 0, /* [cite: 133] */
+                id: 'lem_ii', nombre: '- LEM II', hcDesign: 144, hcExpected: 144, actualPresent: 0,
                 children: [
-                  { nombre: '35 Cab Trim I', hcDesign: 32, hcExpected: 32, actualPresent: 0 }, /* [cite: 133] */
-                  { nombre: '41 Cab Trim II', hcDesign: 45, hcExpected: 45, actualPresent: 0 }, /* [cite: 134] */
-                  { nombre: '47 Sleeper Trim', hcDesign: 9, hcExpected: 9, actualPresent: 0 }, /* [cite: 134] */
-                  { nombre: '39 Cab Trim 320', hcDesign: 31, hcExpected: 31, actualPresent: 0 }, /* [cite: 134] */
-                  { nombre: 'Outbound', hcDesign: 8, hcExpected: 8, actualPresent: 0 }, /* [cite: 135] */
-                  { nombre: '147 LF Conversion', hcDesign: 0, hcExpected: 0, actualPresent: 0 }, /* [cite: 135] */
-                  { nombre: '31 Hood Trim', hcDesign: 9, hcExpected: 9, actualPresent: 0 }, /* [cite: 135, 136] */
-                  { nombre: '45 Fuel Tanks', hcDesign: 10, hcExpected: 10, actualPresent: 0 }, /* [cite: 136] */
+                  { nombre: '35 Cab Trim I', hcDesign: 32, hcExpected: 32, actualPresent: 0 },
+                  { nombre: '41 Cab Trim II', hcDesign: 45, hcExpected: 45, actualPresent: 0 },
+                  { nombre: '47 Sleeper Trim', hcDesign: 9, hcExpected: 9, actualPresent: 0 },
+                  { nombre: '39 Cab Trim 320', hcDesign: 31, hcExpected: 31, actualPresent: 0 },
+                  { nombre: 'Outbound', hcDesign: 8, hcExpected: 8, actualPresent: 0 },
+                  { nombre: '147 LF Conversion', hcDesign: 0, hcExpected: 0, actualPresent: 0 },
+                  { nombre: '31 Hood Trim', hcDesign: 9, hcExpected: 9, actualPresent: 0 },
+                  { nombre: '45 Fuel Tanks', hcDesign: 10, hcExpected: 10, actualPresent: 0 },
                 ]
               }
             ]
           },
           {
-            id: 'test_tu', nombre: '+ TEST / TOUCH UP', hcDesign: 153, hcExpected: 153, actualPresent: 0, isCritical: false, /* [cite: 136] */
+            id: 'test_tu', nombre: '+ TEST / TOUCH UP', hcDesign: 153, hcExpected: 153, actualPresent: 0, isCritical: false,
             estaciones: [
-              { nombre: '- Pruebas Funcionales', hcDesign: 30, hcExpected: 30, actualPresent: 0, children: [] }, /* [cite: 136] */
-              { nombre: '- Recovery', hcDesign: 13, hcExpected: 13, actualPresent: 0, children: [] }, /* [cite: 137] */
-              { nombre: '- Complex Defects (Depes)', hcDesign: 7, hcExpected: 7, actualPresent: 0, children: [] }, /* [cite: 137] */
-              { nombre: '- Delivery (Carpa Chica)', hcDesign: 4, hcExpected: 4, actualPresent: 0, children: [] }, /* [cite: 137] */
-              { nombre: '- Delivery (Carpa Grande)', hcDesign: 65, hcExpected: 65, actualPresent: 0, children: [] }, /* [cite: 137] */
-              { nombre: '- Logistics & Buffers', hcDesign: 12, hcExpected: 12, actualPresent: 0, children: [] }, /* [cite: 138] */
-              { nombre: '- Touch Up', hcDesign: 22, hcExpected: 22, actualPresent: 0, children: [] }, /* [cite: 139] */
+              { nombre: '- Pruebas Funcionales', hcDesign: 30, hcExpected: 30, actualPresent: 0, children: [] },
+              { nombre: '- Recovery', hcDesign: 13, hcExpected: 13, actualPresent: 0, children: [] },
+              { nombre: '- Complex Defects (Depes)', hcDesign: 7, hcExpected: 7, actualPresent: 0, children: [] },
+              { nombre: '- Delivery (Carpa Chica)', hcDesign: 4, hcExpected: 4, actualPresent: 0, children: [] },
+              { nombre: '- Delivery (Carpa Grande)', hcDesign: 65, hcExpected: 65, actualPresent: 0, children: [] },
+              { nombre: '- Logistics & Buffers', hcDesign: 12, hcExpected: 12, actualPresent: 0, children: [] },
+              { nombre: '- Touch Up', hcDesign: 22, hcExpected: 22, actualPresent: 0, children: [] },
             ]
           },
-          { id: 'pps', nombre: '+ PPS / Driver', hcDesign: 6, hcExpected: 6, actualPresent: 0, isCritical: false, estaciones: [] }, /* [cite: 139] */
-          { id: 'del_ready', nombre: '+ Delivery Ready (118)', hcDesign: 7, hcExpected: 7, actualPresent: 0, isCritical: false, estaciones: [] }, /* [cite: 139] */
-          { id: 'offline_ptc', nombre: '+ Offline Shortages & Defects (PTC)', hcDesign: 16, hcExpected: 16, actualPresent: 0, isCritical: true, estaciones: [] }, /* [cite: 139] */
-          { id: 'temp_comp', nombre: '+ Temporary Components', hcDesign: 0, hcExpected: 0, actualPresent: 0, isCritical: false, estaciones: [] }, /* [cite: 140] */
-          { id: 'trainers', nombre: '+ Trainers', hcDesign: 7, hcExpected: 7, actualPresent: 0, isCritical: false, estaciones: [] }, /* [cite: 140] */
+          { id: 'pps', nombre: '+ PPS / Driver', hcDesign: 6, hcExpected: 6, actualPresent: 0, isCritical: false, estaciones: [] },
+          { id: 'del_ready', nombre: '+ Delivery Ready (118)', hcDesign: 7, hcExpected: 7, actualPresent: 0, isCritical: false, estaciones: [] },
+          { id: 'offline_ptc', nombre: '+ Offline Shortages & Defects', hcDesign: 16, hcExpected: 16, actualPresent: 0, isCritical: true, estaciones: [] },
+          { id: 'temp_comp', nombre: '+ Temporary Components', hcDesign: 0, hcExpected: 0, actualPresent: 0, isCritical: false, estaciones: [] },
+          { id: 'trainers', nombre: '+ Trainers', hcDesign: 7, hcExpected: 7, actualPresent: 0, isCritical: false, estaciones: [] },
         ]
       },
       {
-        id: 'kf_logistics', nombre: 'KF LOGISTICS', hcDesign: 49, hcExpected: 49, actualPresent: 0, isCritical: true, /* [cite: 140] */
+        id: 'kf_logistics', nombre: 'KF LOGISTICS', hcDesign: 49, hcExpected: 49, actualPresent: 0, isCritical: true,
         grupos: [
           {
-            id: 'kfl_lec_i', nombre: '- LEC I', hcDesign: 18, hcExpected: 18, actualPresent: 0, isCritical: false, /* [cite: 140] */
+            id: 'kfl_lec_i', nombre: '- LEC I', hcDesign: 18, hcExpected: 18, actualPresent: 0, isCritical: false,
             estaciones: [
-              { nombre: 'Frame', hcDesign: 15, hcExpected: 15, actualPresent: 0, children: [] }, /* [cite: 141] */
-              { nombre: 'Valves', hcDesign: 0, hcExpected: 0, actualPresent: 0, children: [] }, /* [cite: 141] */
-              { nombre: 'Axle Set', hcDesign: 0, hcExpected: 0, actualPresent: 0, children: [] }, /* [cite: 141] */
-              { nombre: 'Axle Trim', hcDesign: 3, hcExpected: 3, actualPresent: 0, children: [] }, /* [cite: 141] */
+              { nombre: 'Frame', hcDesign: 15, hcExpected: 15, actualPresent: 0, children: [] },
+              { nombre: 'Valves', hcDesign: 0, hcExpected: 0, actualPresent: 0, children: [] },
+              { nombre: 'Axle Set', hcDesign: 0, hcExpected: 0, actualPresent: 0, children: [] },
+              { nombre: 'Axle Trim', hcDesign: 3, hcExpected: 3, actualPresent: 0, children: [] },
             ]
           },
           {
-            id: 'kfl_lec_ii', nombre: '- LEC II', hcDesign: 5, hcExpected: 5, actualPresent: 0, isCritical: false, /* [cite: 142] */
+            id: 'kfl_lec_ii', nombre: '- LEC II', hcDesign: 5, hcExpected: 5, actualPresent: 0, isCritical: false,
             estaciones: [
-              { nombre: 'Engines Set', hcDesign: 0, hcExpected: 0, actualPresent: 0, children: [] }, /* [cite: 142] */
-              { nombre: 'Engines Trim', hcDesign: 0, hcExpected: 0, actualPresent: 0, children: [] }, /* [cite: 142] */
-              { nombre: 'Tanks Installation', hcDesign: 3, hcExpected: 3, actualPresent: 0, children: [] }, /* [cite: 142] */
-              { nombre: 'Cab Set', hcDesign: 1, hcExpected: 1, actualPresent: 0, children: [] }, /* [cite: 142, 143] */
-              { nombre: 'Hood Set', hcDesign: 1, hcExpected: 1, actualPresent: 0, children: [] }, /* [cite: 144] */
-              { nombre: 'StartUp', hcDesign: 0, hcExpected: 0, actualPresent: 0, children: [] }, /* [cite: 144] */
+              { nombre: 'Engines Set', hcDesign: 0, hcExpected: 0, actualPresent: 0, children: [] },
+              { nombre: 'Engines Trim', hcDesign: 0, hcExpected: 0, actualPresent: 0, children: [] },
+              { nombre: 'Tanks Installation', hcDesign: 3, hcExpected: 3, actualPresent: 0, children: [] },
+              { nombre: 'Cab Set', hcDesign: 1, hcExpected: 1, actualPresent: 0, children: [] },
+              { nombre: 'Hood Set', hcDesign: 1, hcExpected: 1, actualPresent: 0, children: [] },
+              { nombre: 'StartUp', hcDesign: 0, hcExpected: 0, actualPresent: 0, children: [] },
             ]
           },
           {
-            id: 'kfl_lem_ii', nombre: '- LEM II', hcDesign: 28, hcExpected: 28, actualPresent: 0, isCritical: false, /* [cite: 144] */
+            id: 'kfl_lem_ii', nombre: '- LEM II', hcDesign: 28, hcExpected: 28, actualPresent: 0, isCritical: false,
             estaciones: [
-              { nombre: 'Cab Trim I', hcDesign: 0, hcExpected: 0, actualPresent: 0, children: [] }, /* [cite: 144] */
-              { nombre: 'Cab Trim II', hcDesign: 19, hcExpected: 19, actualPresent: 0, children: [] }, /* [cite: 145] */
-              { nombre: 'Sleeper Trim', hcDesign: 3, hcExpected: 3, actualPresent: 0, children: [] }, /* [cite: 145] */
-              { nombre: 'Cab Trim 320 / LF', hcDesign: 4, hcExpected: 4, actualPresent: 0, children: [] }, /* [cite: 145] */
+              { nombre: 'Cab Trim I', hcDesign: 0, hcExpected: 0, actualPresent: 0, children: [] },
+              { nombre: 'Cab Trim II', hcDesign: 19, hcExpected: 19, actualPresent: 0, children: [] },
+              { nombre: 'Sleeper Trim', hcDesign: 3, hcExpected: 3, actualPresent: 0, children: [] },
+              { nombre: 'Cab Trim 320 / LF', hcDesign: 4, hcExpected: 4, actualPresent: 0, children: [] },
             ]
           }
         ]
       },
       {
-        id: 'assembly_indirect', nombre: 'ASSEMBLY INDIRECT', hcDesign: 311, hcExpected: 311, actualPresent: 0, isCritical: false, /* [cite: 145] */
+        id: 'assembly_indirect', nombre: 'ASSEMBLY INDIRECT', hcDesign: 311, hcExpected: 311, actualPresent: 0, isCritical: false,
         grupos: [
-          { id: 'ai_mat', nombre: '+ MATERIALS', hcDesign: 140, hcExpected: 140, actualPresent: 0, isCritical: true, estaciones: [] }, /* [cite: 145, 146] */
-          { id: 'ai_qual', nombre: '+ QUALITY', hcDesign: 104, hcExpected: 104, actualPresent: 0, isCritical: false, estaciones: [] }, /* [cite: 146] */
-          { id: 'ai_maint', nombre: '+ MAINTENANCE / ME', hcDesign: 67, hcExpected: 67, actualPresent: 0, isCritical: false, estaciones: [] }, /* [cite: 146] */
+          { id: 'ai_mat', nombre: '+ MATERIALS', hcDesign: 140, hcExpected: 140, actualPresent: 0, isCritical: true, estaciones: [] },
+          { id: 'ai_qual', nombre: '+ QUALITY', hcDesign: 104, hcExpected: 104, actualPresent: 0, isCritical: false, estaciones: [] },
+          { id: 'ai_maint', nombre: '+ MAINTENANCE / ME', hcDesign: 67, hcExpected: 67, actualPresent: 0, isCritical: false, estaciones: [] },
         ]
       }
     ]
   },
   {
-    id: 'fabrication', nombre: 'FABRICATION', hcDesign: 334, hcExpected: 334, actualPresent: 0, isCritical: true, /* [cite: 146] */
+    id: 'fabrication', nombre: 'FABRICATION', hcDesign: 334, hcExpected: 334, actualPresent: 0, isCritical: true,
     subAreas: [
       {
-        id: 'fab_direct', nombre: 'FABRICATION DIRECT', hcDesign: 186, hcExpected: 186, actualPresent: 0, isCritical: true, /* [cite: 146] */
+        id: 'fab_direct', nombre: 'FABRICATION DIRECT', hcDesign: 186, hcExpected: 186, actualPresent: 0, isCritical: true,
         grupos: [
-          { id: 'kenfab', nombre: '+ KENFAB', hcDesign: 98, hcExpected: 98, actualPresent: 0, isCritical: true, estaciones: [] }, /* [cite: 146] */
-          { id: 'plastics', nombre: '+ PLASTICS', hcDesign: 88, hcExpected: 88, actualPresent: 0, isCritical: false, estaciones: [] } /* [cite: 146, 147] */
+          { id: 'kenfab', nombre: '+ KENFAB', hcDesign: 98, hcExpected: 98, actualPresent: 0, isCritical: true, estaciones: [] },
+          { id: 'plastics', nombre: '+ PLASTICS', hcDesign: 88, hcExpected: 88, actualPresent: 0, isCritical: false, estaciones: [] }
         ]
       },
       {
-        id: 'fab_indirect', nombre: 'FABRICATION INDIRECT', hcDesign: 148, hcExpected: 148, actualPresent: 0, isCritical: false, /* [cite: 147] */
+        id: 'fab_indirect', nombre: 'FABRICATION INDIRECT', hcDesign: 148, hcExpected: 148, actualPresent: 0, isCritical: false,
         grupos: [
-          { id: 'fi_prod_k', nombre: '+ PRODUCTION KENFAB', hcDesign: 24, hcExpected: 24, actualPresent: 0, isCritical: false, estaciones: [] }, /* [cite: 147] */
-          { id: 'fi_prod_p', nombre: '+ PRODUCTION PLASTICS', hcDesign: 20, hcExpected: 20, actualPresent: 0, isCritical: false, estaciones: [] }, /* [cite: 147, 148] */
-          { id: 'fi_mat', nombre: '+ MATERIALS', hcDesign: 40, hcExpected: 40, actualPresent: 0, isCritical: false, estaciones: [] }, /* [cite: 148] */
-          { id: 'fi_qual', nombre: '+ QUALITY', hcDesign: 24, hcExpected: 24, actualPresent: 0, isCritical: false, estaciones: [] }, /* [cite: 148] */
-          { id: 'fi_maint', nombre: '+ MAINTENANCE / ME', hcDesign: 40, hcExpected: 40, actualPresent: 0, isCritical: false, estaciones: [] } /* [cite: 148] */
+          { id: 'fi_prod_k', nombre: '+ PRODUCTION KENFAB', hcDesign: 24, hcExpected: 24, actualPresent: 0, isCritical: false, estaciones: [] },
+          { id: 'fi_prod_p', nombre: '+ PRODUCTION PLASTICS', hcDesign: 20, hcExpected: 20, actualPresent: 0, isCritical: false, estaciones: [] },
+          { id: 'fi_mat', nombre: '+ MATERIALS', hcDesign: 40, hcExpected: 40, actualPresent: 0, isCritical: false, estaciones: [] },
+          { id: 'fi_qual', nombre: '+ QUALITY', hcDesign: 24, hcExpected: 24, actualPresent: 0, isCritical: false, estaciones: [] },
+          { id: 'fi_maint', nombre: '+ MAINTENANCE / ME', hcDesign: 40, hcExpected: 40, actualPresent: 0, isCritical: false, estaciones: [] }
         ]
       }
     ]
   }
 ];
 
-function applyFactor(nodos, factor) {
-  function applyNode(node) {
-    const present = node.hcExpected > 0 ? Math.round(node.hcExpected * factor) : 0;
-    const out = { ...node, actualPresent: present };
-    if (node.subAreas)   out.subAreas   = node.subAreas.map(applyNode);
-    if (node.grupos)     out.grupos     = node.grupos.map(applyNode);
-    if (node.estaciones) out.estaciones = node.estaciones.map(applyNode);
-    if (node.children)   out.children   = node.children.map(applyNode);
+// Motor Dinámico
+function applyFactor(nodos, shiftShare, baseAttendance) {
+  function processNode(node) {
+    const out = { ...node };
+    let childExpected = 0;
+    let childPresent = 0;
+    let isLeaf = true;
+
+    if (node.children && node.children.length > 0) {
+      out.children = node.children.map(processNode);
+      out.children.forEach(c => { childExpected += c.hcExpected; childPresent += c.actualPresent; });
+      isLeaf = false;
+    } else if (node.estaciones && node.estaciones.length > 0) {
+      out.estaciones = node.estaciones.map(processNode);
+      out.estaciones.forEach(c => { childExpected += c.hcExpected; childPresent += c.actualPresent; });
+      isLeaf = false;
+    } else if (node.grupos && node.grupos.length > 0) {
+      out.grupos = node.grupos.map(processNode);
+      out.grupos.forEach(c => { childExpected += c.hcExpected; childPresent += c.actualPresent; });
+      isLeaf = false;
+    } else if (node.subAreas && node.subAreas.length > 0) {
+      out.subAreas = node.subAreas.map(processNode);
+      out.subAreas.forEach(c => { childExpected += c.hcExpected; childPresent += c.actualPresent; });
+      isLeaf = false;
+    }
+
+    if (isLeaf) {
+      out.hcExpected = Math.round((node.hcDesign || 0) * shiftShare);
+      const noise = (Math.random() * 0.12) - 0.06; 
+      let rate = baseAttendance + noise;
+      if (rate > 1) rate = 1; 
+      out.actualPresent = out.hcExpected > 0 ? Math.round(out.hcExpected * rate) : 0;
+    } else {
+      out.hcExpected = childExpected;
+      out.actualPresent = childPresent;
+    }
     return out;
   }
-  return nodos.map(applyNode);
+  return nodos.map(processNode);
 }
+
+// NUEVO: Cálculos para el "Total" (100% de la capacidad de diseño, ~90.1% de asistencia para generar déficit de ~148)
+const areasTotal = applyFactor(LEGACY_AREAS, 1.0, 0.901);
+const ramasTotal = applyFactor(RAMAS_TEMPLATE, 1.0, 0.901);
+const expectedTotal = areasTotal.reduce((sum, a) => sum + a.hcExpected, 0);
+
+// Cálculos de Turnos
+const areasA = applyFactor(LEGACY_AREAS, 0.454, 0.94);
+const ramasA = applyFactor(RAMAS_TEMPLATE, 0.454, 0.94);
+const expectedA = areasA.reduce((sum, a) => sum + a.hcExpected, 0);
+
+const areasB = applyFactor(LEGACY_AREAS, 0.421, 0.91);
+const ramasB = applyFactor(RAMAS_TEMPLATE, 0.421, 0.91);
+const expectedB = areasB.reduce((sum, a) => sum + a.hcExpected, 0);
+
+const areasC = applyFactor(LEGACY_AREAS, 0.125, 0.85);
+const ramasC = applyFactor(RAMAS_TEMPLATE, 0.125, 0.85);
+const expectedC = areasC.reduce((sum, a) => sum + a.hcExpected, 0);
 
 export const mockSnapshots = [
   {
+    id: '2026-06-10-Total', fecha: '2026-06-10', turno: 'Total', horario: 'Consolidado 24 Hrs',
+    hcContratado: HC_CONTRATADO, 
+    hcExpectedTotal: expectedTotal, // Apuntará a 1498
+    otHabilitada: true,
+    ramas: ramasTotal,
+    areas: areasTotal,
+  },
+  {
     id: '2026-06-10-A', fecha: '2026-06-10', turno: 'Turno A', horario: '06:00 – 14:00',
-    hcContratado: HC_CONTRATADO, hcExpectedTotal: 1498, otHabilitada: true,
-    ramas: applyFactor(RAMAS_TEMPLATE, 0.87),
-    areas: applyFactor(LEGACY_AREAS, 0.87),
+    hcContratado: HC_CONTRATADO, 
+    hcExpectedTotal: expectedA,
+    otHabilitada: true,
+    ramas: ramasA,
+    areas: areasA,
   },
   {
     id: '2026-06-10-B', fecha: '2026-06-10', turno: 'Turno B', horario: '14:00 – 22:00',
-    hcContratado: HC_CONTRATADO, hcExpectedTotal: 1498, otHabilitada: false,
-    ramas: applyFactor(RAMAS_TEMPLATE, 0.97),
-    areas: applyFactor(LEGACY_AREAS, 0.97),
+    hcContratado: HC_CONTRATADO, 
+    hcExpectedTotal: expectedB,
+    otHabilitada: false,
+    ramas: ramasB,
+    areas: areasB,
   },
   {
     id: '2026-06-10-C', fecha: '2026-06-10', turno: 'Turno C', horario: '22:00 – 06:00',
-    hcContratado: HC_CONTRATADO, hcExpectedTotal: 1498, otHabilitada: true,
-    ramas: applyFactor(RAMAS_TEMPLATE, 0.78),
-    areas: applyFactor(LEGACY_AREAS, 0.78),
+    hcContratado: HC_CONTRATADO, 
+    hcExpectedTotal: expectedC,
+    otHabilitada: true,
+    ramas: ramasC,
+    areas: areasC,
   },
 ];
 

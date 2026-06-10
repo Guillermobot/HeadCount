@@ -250,14 +250,15 @@ export const MainLayout = ({ children }) => {
                 </select>
               </div>
 
-              {/* Shift Filter */}
+             {/* Shift Filter */}
               <div className="space-y-2">
                 <label className="text-[10px] font-bold text-brand-text-muted uppercase tracking-wider flex items-center gap-1">
                   <Clock size={12} />
                   Turno Activo
                 </label>
                 <div className="space-y-1">
-                  {['Turno A', 'Turno B', 'Turno C'].map((turno) => (
+                  {/* AQUÍ SE AGREGÓ EL TURNO TOTAL AL ARREGLO */}
+                  {['Total', 'Turno A', 'Turno B', 'Turno C'].map((turno) => (
                     <button
                       key={turno}
                       onClick={() => setFilter('turno', turno)}
@@ -267,7 +268,8 @@ export const MainLayout = ({ children }) => {
                           : 'bg-brand-card border-brand-border text-brand-text-secondary hover:border-brand-text-muted'
                       }`}
                     >
-                      {turno}
+                      {/* Personalizamos la etiqueta para que "Total" se vea más descriptivo */}
+                      {turno === 'Total' ? 'Planta Total (24 Hrs)' : turno}
                     </button>
                   ))}
                 </div>

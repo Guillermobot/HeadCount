@@ -9,7 +9,7 @@ export const AppProvider = ({ children }) => {
   // Global Filters
   const [filters, setFilters] = useState({
     fecha: "2026-06-10",
-    turno: "Turno A",
+    turno: "Total",
     soloCriticas: false
   });
 
