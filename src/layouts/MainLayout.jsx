@@ -42,7 +42,7 @@ export const MainLayout = ({ children }) => {
     'executive': 'Control Ejecutivo de Capacidad',
     'coverage': 'Monitoreo de Cobertura por Área',
     'hpt-center': 'HPT Impact Center',
-    'hr': 'Gestión e Indicadores de HC (HR)',
+    'hr': 'Workforce Analytics',
     'risk-center': 'Operational Risk Center'
   };
 
@@ -50,7 +50,7 @@ export const MainLayout = ({ children }) => {
     { id: 'executive', name: 'Control Ejecutivo', icon: LayoutDashboard },
     { id: 'coverage', name: 'Cobertura por Área', icon: Layers },
     { id: 'hpt-center', name: 'HPT Impact Center', icon: TrendingUp },
-    { id: 'hr', name: 'Gestión de HC (HR)', icon: Users },
+    { id: 'hr', name: 'Workforce Analytics', icon: Users },
     { id: 'risk-center', name: 'Risk Center', icon: ShieldAlert },
   ];
 
