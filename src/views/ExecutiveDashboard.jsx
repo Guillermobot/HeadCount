@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   ComposedChart,
-  Line,
+  BarChart,
   Bar,
   Area,
   XAxis,
@@ -9,229 +9,63 @@ import {
   CartesianGrid,
   Tooltip,
   ReferenceLine,
-  Legend,
-  ResponsiveContainer
+  ResponsiveContainer,
+  Cell,
+  LabelList,
 } from 'recharts';
 import { useApp } from '../context/AppContext';
 import { useOperationalMetrics } from '../hooks/useOperationalMetrics';
-import { UPD_TARGET, HC_DESIGN_TOTAL, HPT_OBJECTIVE } from '../data/constants';
+import { UPD_TARGET, HC_DESIGN_TOTAL, HPT_OBJECTIVE, HOURS_PER_SHIFT } from '../data/constants';
 import { historicalDays } from '../data/mockData';
-import {
-  TrendingUp,
-  TrendingDown,
-  Minus,
-  AlertTriangle,
-  CheckCircle,
-  XCircle,
-  ChevronRight,
-  Users,
-  Zap,
-  Activity,
-  Target,
-  Clock
-} from 'lucide-react';
 
 // ─────────────────────────────────────────────────────────────────
-// Sub-components
+// Power BI Design Tokens
 // ─────────────────────────────────────────────────────────────────
+const PBI = {
+  canvas:    '#121212',
+  card:      '#1E1E1E',
+  cardAlt:   '#252525',
+  border:    '#333333',
+  borderMid: '#444444',
+  blue:      '#118DFF',
+  darkBlue:  '#12239E',
+  orange:    '#E66C37',
+  red:       '#D64550',
+  green:     '#00B01D',
+  white:     '#FFFFFF',
+  gray:      '#A6A6A6',
+  muted:     '#666666',
+  font:      '"Segoe UI", "wf_standard-font", Arial, sans-serif',
+};
 
-/** Standard KPI card with a bottom accent line and delta indicator */
-function KpiCard({ label, value, sub, accent = false, deltaType = 'neutral', icon: Icon, footnote }) {
-  const colorMap = {
-    success: { bar: 'bg-emerald-500', text: 'text-emerald-400', icon: 'text-emerald-400' },
-    danger: { bar: 'bg-red-700', text: 'text-red-400', icon: 'text-red-400' },
-    warning: { bar: 'bg-yellow-500', text: 'text-yellow-400', icon: 'text-yellow-400' },
-    neutral: { bar: 'bg-brand-accent', text: 'text-brand-accent', icon: 'text-brand-accent' },
-    fixed: { bar: 'bg-blue-500', text: 'text-blue-400', icon: 'text-blue-400' },
-  };
-  const c = colorMap[deltaType] || colorMap.neutral;
-  return (
-    <div className={`relative bg-brand-card rounded border border-brand-border flex flex-col justify-between p-4 h-28 overflow-hidden group hover:border-opacity-80 transition-all`}>
-      {/* Accent top border */}
-      <div className={`absolute top-0 left-0 right-0 h-0.5 ${c.bar}`} />
-      {/* Label row */}
-      <div className="flex items-start justify-between">
-        <span className="text-[10px] font-bold uppercase tracking-widest text-brand-text-secondary leading-tight pr-2">{label}</span>
-        {Icon && <Icon size={14} className={c.icon} />}
-      </div>
-      {/* Value */}
-      <div className={`text-2xl font-extrabold tracking-tight ${c.text}`}>{value}</div>
-      {/* Sub-label / footnote */}
-      <div className="flex items-center justify-between">
-        <span className="text-[10px] text-brand-text-muted leading-tight">{sub}</span>
-        {footnote && <span className="text-[9px] text-brand-text-muted/60 italic">{footnote}</span>}
-      </div>
-    </div>
-  );
+// Coverage thresholds → Power BI data color
+function coverageColor(pct, isCritical) {
+  const warn = isCritical ? 95 : 90;
+  const crit = isCritical ? 90 : 85;
+  if (pct >= warn) return PBI.green;
+  if (pct >= crit) return PBI.orange;
+  return PBI.red;
 }
 
-/** Operational traffic light badge */
-function StatusBadge({ status, label }) {
-  const map = {
-    success: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
-    warning: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30',
-    danger: 'bg-red-700/10 text-red-400 border-red-700/30',
-  };
-  const dotMap = {
-    success: 'bg-emerald-400',
-    warning: 'bg-yellow-400',
-    danger: 'bg-red-500 animate-pulse',
-  };
-  return (
-    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-[10px] font-semibold ${map[status]}`}>
-      <span className={`h-1.5 w-1.5 rounded-full ${dotMap[status]}`} />
-      {label}
-    </span>
-  );
-}
-
-/** Coverage colour logic (shared between heatmap and risk table) */
-function getCoverageStatus(coverage, isCritical) {
-  if (isCritical) {
-    if (coverage < 90) return 'danger';
-    if (coverage < 95) return 'warning';
-    return 'success';
-  }
-  if (coverage < 85) return 'danger';
-  if (coverage < 90) return 'warning';
-  return 'success';
-}
-
-const statusLabels = { success: 'Normal', warning: 'Alerta', danger: 'Crítico' };
-
-/** Heatmap card per area */
-function AreaHeatCard({ area, onClick, isSelected }) {
-  const coverage = area.hcExpected > 0 ? (area.actualPresent / area.hcExpected) * 100 : 0;
-  const status = getCoverageStatus(coverage, area.isCritical);
-  const barColor = {
-    success: 'bg-emerald-500',
-    warning: 'bg-yellow-400',
-    danger: 'bg-red-600',
-  }[status];
-  const ringColor = {
-    success: 'border-emerald-500/50',
-    warning: 'border-yellow-400/50',
-    danger: 'border-red-600/60',
-  }[status];
-
-  return (
-    <button
-      onClick={onClick}
-      className={`w-full text-left bg-brand-bg rounded border p-4 transition-all hover:border-opacity-80 cursor-pointer ${
-        isSelected ? `border-brand-accent` : `border-brand-border hover:${ringColor}`
-      }`}
-    >
-      <div className="flex items-start justify-between mb-3">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="font-semibold text-xs text-brand-text-primary">{area.nombre}</span>
-            {area.isCritical && (
-              <span className="text-[8px] font-bold uppercase px-1.5 py-0.5 rounded bg-red-900/40 text-red-400 border border-red-800/40 tracking-wide">
-                Crítica
-              </span>
-            )}
-          </div>
-          <div className="text-[10px] text-brand-text-muted mt-0.5">
-            {area.actualPresent} / {area.hcExpected} operadores
-          </div>
-        </div>
-        <StatusBadge status={status} label={statusLabels[status]} />
-      </div>
-
-      {/* Coverage progress bar */}
-      <div className="space-y-1">
-        <div className="flex justify-between text-[10px]">
-          <span className="text-brand-text-muted">Cobertura</span>
-          <span className={`font-bold ${status === 'danger' ? 'text-red-400' : status === 'warning' ? 'text-yellow-400' : 'text-emerald-400'}`}>
-            {coverage.toFixed(1)}%
-          </span>
-        </div>
-        <div className="h-1.5 w-full bg-brand-border rounded-full overflow-hidden">
-          <div
-            className={`h-full rounded-full transition-all ${barColor}`}
-            style={{ width: `${Math.min(coverage, 100)}%` }}
-          />
-        </div>
-      </div>
-
-      {/* HC mini stats row */}
-      <div className="mt-3 flex gap-3 text-[9px] text-brand-text-muted">
-        <span>Diseño: <b className="text-brand-text-secondary">{area.hcDesign}</b></span>
-        <span>Esp: <b className="text-brand-text-secondary">{area.hcExpected}</b></span>
-        <span>Real: <b className="text-brand-text-secondary">{area.actualPresent}</b></span>
-        <span>Δ: <b className={status === 'success' ? 'text-emerald-400' : 'text-red-400'}>{area.actualPresent - area.hcExpected}</b></span>
-      </div>
-    </button>
-  );
-}
-
-/** Risk impact table — ranked by coverage gap */
-function RiskImpactTable({ areas, totalExpected, hptObjective, hptActual }) {
-  const ranked = [...areas]
-    .map(a => {
-      const coverage = a.hcExpected > 0 ? (a.actualPresent / a.hcExpected) * 100 : 0;
-      const deficit = a.hcExpected - a.actualPresent;
-      const areaHptWeight = a.hcDesign / HC_DESIGN_TOTAL;
-      const hptImpact = deficit > 0 ? ((deficit * 8) / 49) * areaHptWeight : 0;
-      const status = getCoverageStatus(coverage, a.isCritical);
-      return { ...a, coverage, deficit, hptImpact, status };
-    })
-    .sort((a, b) => b.hptImpact - a.hptImpact);
-
-  const maxImpact = Math.max(...ranked.map(a => a.hptImpact), 1);
-
-  return (
-    <div className="space-y-2.5">
-      {ranked.map((area) => (
-        <div key={area.nombre} className="space-y-1.5">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 min-w-0">
-              <div className={`h-2.5 w-2.5 rounded-sm flex-shrink-0 ${
-                area.status === 'success' ? 'bg-emerald-500' : area.status === 'warning' ? 'bg-yellow-400' : 'bg-red-600'
-              }`} />
-              <span className="text-xs font-medium text-brand-text-primary truncate">{area.nombre}</span>
-              {area.isCritical && <span className="text-[8px] text-red-400">●</span>}
-            </div>
-            <div className="flex items-center gap-3 flex-shrink-0">
-              <span className={`text-xs font-bold tabular-nums ${
-                area.status === 'danger' ? 'text-red-400' : area.status === 'warning' ? 'text-yellow-400' : 'text-emerald-400'
-              }`}>{area.coverage.toFixed(1)}%</span>
-              <span className={`text-[10px] tabular-nums ${area.hptImpact > 2 ? 'text-red-400' : 'text-brand-text-muted'}`}>
-                {area.hptImpact > 0 ? `+${area.hptImpact.toFixed(1)} h` : '—'}
-              </span>
-              <StatusBadge status={area.status} label={statusLabels[area.status]} />
-            </div>
-          </div>
-          {/* Horizontal impact bar */}
-          <div className="h-1 w-full bg-brand-border rounded-full overflow-hidden">
-            <div
-              className={`h-full rounded-full ${
-                area.status === 'success' ? 'bg-emerald-500' : area.status === 'warning' ? 'bg-yellow-400' : 'bg-red-600'
-              }`}
-              style={{ width: `${Math.min((area.hptImpact / maxImpact) * 100, 100)}%` }}
-            />
-          </div>
-        </div>
-      ))}
-      <div className="border-t border-brand-border pt-2.5 mt-1 flex justify-between text-[10px] text-brand-text-muted">
-        <span>● = Área Crítica (Bottleneck)</span>
-        <span className="text-brand-text-secondary font-semibold">Δ HPT vs Obj: {(hptActual - hptObjective) > 0 ? '+' : ''}{(hptActual - hptObjective).toFixed(1)} h</span>
-      </div>
-    </div>
-  );
-}
-
-/** Custom recharts tooltip styled to match Fabric dark theme */
-const FabricTooltip = ({ active, payload, label }) => {
+// ─────────────────────────────────────────────────────────────────
+// Power BI Tooltip
+// ─────────────────────────────────────────────────────────────────
+const PbiTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-[#1D1D1D] border border-[#2D2D2D] rounded shadow-2xl px-3 py-2.5 text-xs font-segoe">
-      <div className="text-[#A19F9D] mb-1.5 font-semibold">{label}</div>
+    <div style={{
+      background: '#252525', border: `1px solid ${PBI.borderMid}`,
+      padding: '8px 12px', fontFamily: PBI.font, fontSize: 12,
+      boxShadow: '0 4px 16px rgba(0,0,0,0.6)',
+    }}>
+      <div style={{ color: PBI.gray, fontWeight: 600, marginBottom: 6 }}>{label}</div>
       {payload.map((p) => (
-        <div key={p.dataKey} className="flex items-center gap-2 py-0.5">
-          <span className="h-2 w-2 rounded-full" style={{ backgroundColor: p.color }} />
-          <span className="text-[#A19F9D]">{p.name}:</span>
-          <span className="font-bold text-[#F3F2F1]">{typeof p.value === 'number' ? p.value.toFixed(1) : p.value}{p.unit || ''}</span>
+        <div key={p.dataKey || p.name} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '2px 0' }}>
+          <span style={{ width: 8, height: 8, borderRadius: 0, background: p.color || p.fill, display: 'inline-block' }} />
+          <span style={{ color: PBI.gray }}>{p.name}:</span>
+          <span style={{ color: PBI.white, fontWeight: 700 }}>
+            {typeof p.value === 'number' ? p.value.toFixed(1) : p.value}{p.unit || ''}
+          </span>
         </div>
       ))}
     </div>
@@ -239,299 +73,578 @@ const FabricTooltip = ({ active, payload, label }) => {
 };
 
 // ─────────────────────────────────────────────────────────────────
-// Main Dashboard Component
+// Power BI KPI Card
 // ─────────────────────────────────────────────────────────────────
+function PbiKpiCard({ label, value, sub, accentColor = PBI.blue, icon }) {
+  return (
+    <div style={{
+      background: PBI.card,
+      border: `1px solid ${PBI.border}`,
+      borderTop: `3px solid ${accentColor}`,
+      padding: '14px 16px',
+      fontFamily: PBI.font,
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 4,
+      minHeight: 108,
+    }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <span style={{ fontSize: 10, fontWeight: 600, color: PBI.gray, textTransform: 'uppercase', letterSpacing: '0.06em', lineHeight: 1.3 }}>
+          {label}
+        </span>
+        {icon}
+      </div>
+      <div style={{ fontSize: 26, fontWeight: 600, color: accentColor, lineHeight: 1.2, marginTop: 2 }}>
+        {value}
+      </div>
+      <div style={{ fontSize: 11, color: PBI.muted, lineHeight: 1.3 }}>{sub}</div>
+    </div>
+  );
+}
 
+// ─────────────────────────────────────────────────────────────────
+// Power BI Matrix Visual
+// ─────────────────────────────────────────────────────────────────
+function PowerBiMatrix({ areas, soloCriticas }) {
+  const displayAreas = soloCriticas ? areas.filter(a => a.isCritical) : areas;
+
+  const cols = [
+    { key: 'nombre',   label: 'Área',        align: 'left',  width: '30%' },
+    { key: 'hcDesign', label: 'Diseño',      align: 'right', width: '11%' },
+    { key: 'hcExp',    label: 'Esp.',        align: 'right', width: '11%' },
+    { key: 'real',     label: 'Real',        align: 'right', width: '11%' },
+    { key: 'delta',    label: 'Δ Faltantes', align: 'right', width: '12%' },
+    { key: 'cov',      label: 'Cobertura %', align: 'left',  width: '25%' },
+  ];
+
+  return (
+    <div style={{ fontFamily: PBI.font, overflowX: 'auto' }}>
+      <table className="pbi-matrix" style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
+        {/* Header */}
+        <thead>
+          <tr style={{ background: '#252525', borderBottom: `2px solid ${PBI.border}` }}>
+            {cols.map(c => (
+              <th key={c.key} style={{
+                padding: '7px 10px',
+                fontSize: 10,
+                fontWeight: 700,
+                color: PBI.gray,
+                textTransform: 'uppercase',
+                letterSpacing: '0.06em',
+                textAlign: c.align,
+                width: c.width,
+                whiteSpace: 'nowrap',
+                borderBottom: `1px solid ${PBI.border}`,
+              }}>
+                {c.label}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {displayAreas.map((area, idx) => {
+            const coverage = area.hcExpected > 0 ? (area.actualPresent / area.hcExpected) * 100 : 0;
+            const deficit = area.actualPresent - area.hcExpected;
+            const barColor = coverageColor(coverage, area.isCritical);
+            const isEven = idx % 2 === 0;
+
+            return (
+              <tr
+                key={area.nombre}
+                style={{
+                  background: isEven ? PBI.card : '#202020',
+                  borderBottom: `1px solid ${PBI.border}`,
+                  transition: 'background 0.1s',
+                }}
+              >
+                {/* Área */}
+                <td style={{ padding: '7px 10px', textAlign: 'left' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{
+                      width: 3, height: 14, background: barColor,
+                      display: 'inline-block', flexShrink: 0,
+                    }} />
+                    <span style={{ fontSize: 12, color: PBI.white, fontWeight: area.isCritical ? 600 : 400 }}>
+                      {area.nombre}
+                    </span>
+                    {area.isCritical && (
+                      <span style={{
+                        fontSize: 9, color: PBI.red, fontWeight: 700,
+                        padding: '1px 4px', border: `1px solid ${PBI.red}`,
+                        letterSpacing: '0.04em', lineHeight: 1.4,
+                      }}>CRÍTICA</span>
+                    )}
+                  </div>
+                </td>
+                {/* Diseño */}
+                <td style={{ padding: '7px 10px', textAlign: 'right', fontSize: 12, color: PBI.gray }}>
+                  {area.hcDesign.toLocaleString()}
+                </td>
+                {/* Esperado */}
+                <td style={{ padding: '7px 10px', textAlign: 'right', fontSize: 12, color: PBI.gray }}>
+                  {area.hcExpected.toLocaleString()}
+                </td>
+                {/* Real */}
+                <td style={{ padding: '7px 10px', textAlign: 'right', fontSize: 12, color: barColor, fontWeight: 600 }}>
+                  {area.actualPresent.toLocaleString()}
+                </td>
+                {/* Delta */}
+                <td style={{ padding: '7px 10px', textAlign: 'right', fontSize: 12, fontWeight: 600 }}>
+                  <span style={{ color: deficit < 0 ? PBI.red : PBI.green }}>
+                    {deficit >= 0 ? '+' : ''}{deficit}
+                  </span>
+                </td>
+                {/* Cobertura % — Data Bar */}
+                <td style={{ padding: '7px 10px', textAlign: 'left' }}>
+                  <div style={{ position: 'relative', display: 'flex', alignItems: 'center', height: 20 }}>
+                    {/* Background Data Bar */}
+                    <div style={{
+                      position: 'absolute',
+                      left: 0, top: 0, bottom: 0,
+                      width: `${Math.min(coverage, 100)}%`,
+                      background: barColor,
+                      opacity: 0.18,
+                      pointerEvents: 'none',
+                    }} />
+                    {/* Value text */}
+                    <span style={{
+                      position: 'relative',
+                      zIndex: 1,
+                      fontSize: 12,
+                      fontWeight: 700,
+                      color: barColor,
+                      paddingLeft: 4,
+                      fontVariantNumeric: 'tabular-nums',
+                    }}>
+                      {coverage.toFixed(1)}%
+                    </span>
+                    {/* Sub-area drill indicator */}
+                    {area.children?.length > 0 && (
+                      <span style={{ marginLeft: 6, fontSize: 9, color: PBI.muted }}>
+                        {area.children.length} sub-áreas
+                      </span>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+        {/* Totals row */}
+        <tfoot>
+          <tr style={{ background: '#252525', borderTop: `2px solid ${PBI.border}` }}>
+            <td style={{ padding: '7px 10px', fontSize: 11, fontWeight: 700, color: PBI.gray }}>
+              TOTAL TURNO
+            </td>
+            <td style={{ padding: '7px 10px', textAlign: 'right', fontSize: 11, color: PBI.gray }}>
+              {displayAreas.reduce((s, a) => s + a.hcDesign, 0)}
+            </td>
+            <td style={{ padding: '7px 10px', textAlign: 'right', fontSize: 11, color: PBI.gray }}>
+              {displayAreas.reduce((s, a) => s + a.hcExpected, 0)}
+            </td>
+            <td style={{ padding: '7px 10px', textAlign: 'right', fontSize: 11, fontWeight: 700, color: PBI.white }}>
+              {displayAreas.reduce((s, a) => s + a.actualPresent, 0)}
+            </td>
+            <td style={{ padding: '7px 10px', textAlign: 'right', fontSize: 11, fontWeight: 700 }}>
+              {(() => {
+                const d = displayAreas.reduce((s, a) => s + (a.actualPresent - a.hcExpected), 0);
+                return <span style={{ color: d < 0 ? PBI.red : PBI.green }}>{d >= 0 ? '+' : ''}{d}</span>;
+              })()}
+            </td>
+            <td style={{ padding: '7px 10px' }}>
+              {(() => {
+                const totExp = displayAreas.reduce((s, a) => s + a.hcExpected, 0);
+                const totPres = displayAreas.reduce((s, a) => s + a.actualPresent, 0);
+                const totalCov = totExp > 0 ? (totPres / totExp) * 100 : 0;
+                const col = totalCov >= 95 ? PBI.green : totalCov >= 90 ? PBI.orange : PBI.red;
+                return (
+                  <div style={{ position: 'relative', display: 'flex', alignItems: 'center', height: 20 }}>
+                    <div style={{
+                      position: 'absolute', left: 0, top: 0, bottom: 0,
+                      width: `${Math.min(totalCov, 100)}%`,
+                      background: col, opacity: 0.22,
+                    }} />
+                    <span style={{ position: 'relative', zIndex: 1, fontSize: 12, fontWeight: 700, color: col, paddingLeft: 4 }}>
+                      {totalCov.toFixed(1)}%
+                    </span>
+                  </div>
+                );
+              })()}
+            </td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Horizontal HPT Impact Bar Chart (Power BI Clustered Horizontal)
+// ─────────────────────────────────────────────────────────────────
+function HptImpactHorizontalBar({ areas }) {
+  const data = areas
+    .map((area) => {
+      const deficit = Math.max(0, area.hcExpected - area.actualPresent);
+      const areaWeight = area.hcDesign / HC_DESIGN_TOTAL;
+      const hptContrib = deficit > 0 ? parseFloat(((deficit * HOURS_PER_SHIFT * 1.2 * areaWeight) / 49).toFixed(2)) : 0;
+      const barColor = area.status === 'danger' ? PBI.red : area.status === 'warning' ? PBI.orange : PBI.green;
+      return {
+        name: area.nombre.replace('Ingeniería Industrial y MFC', 'Ing. Industrial').replace('Soporte / Facilities / Dir.', 'Soporte/Dir.'),
+        hptImpact: hptContrib,
+        fill: barColor,
+        coverage: area.hcExpected > 0 ? (area.actualPresent / area.hcExpected) * 100 : 0,
+      };
+    })
+    .filter(d => d.hptImpact > 0.01)
+    .sort((a, b) => b.hptImpact - a.hptImpact); // Descending — Power BI default
+
+  if (!data.length) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: PBI.muted, fontSize: 12 }}>
+        Sin impacto HPT registrado en este turno
+      </div>
+    );
+  }
+
+  const maxVal = Math.max(...data.map(d => d.hptImpact));
+
+  return (
+    <ResponsiveContainer width="100%" height={Math.max(data.length * 40 + 40, 180)}>
+      <BarChart
+        layout="vertical"
+        data={data}
+        margin={{ top: 4, right: 56, bottom: 4, left: 8 }}
+        barCategoryGap="30%"
+      >
+        <CartesianGrid strokeDasharray="2 4" stroke={PBI.border} horizontal={false} />
+        <XAxis
+          type="number"
+          domain={[0, maxVal * 1.2]}
+          tick={{ fontSize: 9, fill: PBI.muted, fontFamily: PBI.font }}
+          axisLine={false}
+          tickLine={false}
+          tickFormatter={(v) => `+${v.toFixed(1)}h`}
+        />
+        <YAxis
+          type="category"
+          dataKey="name"
+          tick={{ fontSize: 10, fill: PBI.gray, fontFamily: PBI.font }}
+          axisLine={false}
+          tickLine={false}
+          width={120}
+        />
+        <Tooltip
+          content={({ active, payload }) => {
+            if (!active || !payload?.length) return null;
+            const d = payload[0]?.payload;
+            return (
+              <div style={{
+                background: PBI.cardAlt, border: `1px solid ${PBI.borderMid}`,
+                padding: '8px 12px', fontFamily: PBI.font, fontSize: 12,
+              }}>
+                <div style={{ color: PBI.white, fontWeight: 600 }}>{d?.name}</div>
+                <div style={{ color: PBI.gray, marginTop: 4 }}>
+                  Impacto HPT: <b style={{ color: d?.fill }}>+{d?.hptImpact.toFixed(2)} hrs</b>
+                </div>
+                <div style={{ color: PBI.gray }}>
+                  Cobertura: <b style={{ color: d?.fill }}>{d?.coverage.toFixed(1)}%</b>
+                </div>
+              </div>
+            );
+          }}
+          cursor={{ fill: 'rgba(255,255,255,0.04)' }}
+        />
+        <ReferenceLine x={0} stroke={PBI.border} />
+        <Bar dataKey="hptImpact" radius={0} maxBarSize={22}>
+          {data.map((entry, i) => (
+            <Cell key={i} fill={entry.fill} />
+          ))}
+          <LabelList
+            dataKey="hptImpact"
+            position="right"
+            formatter={(v) => `+${v.toFixed(1)}h`}
+            style={{ fontSize: 10, fill: PBI.gray, fontFamily: PBI.font }}
+          />
+        </Bar>
+      </BarChart>
+    </ResponsiveContainer>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Section Header (Power BI visual title style)
+// ─────────────────────────────────────────────────────────────────
+function PbiCardHeader({ title, subtitle, children }) {
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between',
+      padding: '12px 16px 10px',
+      borderBottom: `1px solid ${PBI.border}`,
+      flexWrap: 'wrap', gap: 8,
+    }}>
+      <div>
+        <div style={{ fontSize: 12, fontWeight: 600, color: PBI.white, fontFamily: PBI.font }}>
+          {title}
+        </div>
+        {subtitle && (
+          <div style={{ fontSize: 10, color: PBI.muted, marginTop: 2, fontFamily: PBI.font }}>
+            {subtitle}
+          </div>
+        )}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Risk Level Badge
+// ─────────────────────────────────────────────────────────────────
+function RiskBadge({ nivel, score }) {
+  const colors = {
+    'Crítico': PBI.red,
+    'Alto': PBI.orange,
+    'Medio': '#F1C40F',
+    'Bajo': PBI.green,
+  };
+  const col = colors[nivel] || PBI.gray;
+  return (
+    <div style={{
+      display: 'inline-flex', alignItems: 'center', gap: 6,
+      padding: '3px 10px',
+      border: `1px solid ${col}`,
+      background: `${col}18`,
+      fontFamily: PBI.font, fontSize: 11, fontWeight: 700,
+      color: col, letterSpacing: '0.04em',
+    }}>
+      <span style={{ width: 6, height: 6, background: col, display: 'inline-block', animation: nivel === 'Crítico' ? 'pulse 1s infinite' : 'none' }} />
+      {nivel.toUpperCase()}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Main Dashboard
+// ─────────────────────────────────────────────────────────────────
 export default function ExecutiveDashboard() {
-  const { displaySnapshot } = useApp();
+  const { displaySnapshot, filters } = useApp();
   const metrics = useOperationalMetrics(displaySnapshot);
-  const [selectedArea, setSelectedArea] = useState(null);
-
+  const hptDelta = metrics.hptActual - HPT_OBJECTIVE;
   const hcContratado = displaySnapshot?.hcContratado ?? HC_DESIGN_TOTAL;
 
-  // KPI Row 1 — Headcount chain
-  const kpiRowOne = [
+  // ── KPI Rows config ──
+  const row1 = [
     {
-      id: 'upd',
       label: 'UPD Target',
-      value: `${UPD_TARGET.toFixed(0)}`,
-      sub: 'Unidades por día — Fijo',
-      icon: Target,
-      deltaType: 'fixed',
+      value: UPD_TARGET.toFixed(0),
+      sub: 'Objetivo fijo — Ingeniería Industrial',
+      color: PBI.blue,
     },
     {
-      id: 'hc-design',
       label: 'HC Diseño',
       value: HC_DESIGN_TOTAL.toLocaleString(),
-      sub: 'Estándar de Ingeniería Industrial',
-      icon: Users,
-      deltaType: 'fixed',
+      sub: 'Estándar operativo de diseño',
+      color: PBI.blue,
     },
     {
-      id: 'hc-contratado',
       label: 'HC Contratado',
       value: hcContratado.toLocaleString(),
-      sub: `Brecha: ${HC_DESIGN_TOTAL - hcContratado} vacantes vs diseño`,
-      icon: Users,
-      deltaType: HC_DESIGN_TOTAL - hcContratado > 50 ? 'danger' : HC_DESIGN_TOTAL - hcContratado > 20 ? 'warning' : 'success',
+      sub: `Brecha vs diseño: −${HC_DESIGN_TOTAL - hcContratado} vacantes`,
+      color: (HC_DESIGN_TOTAL - hcContratado) > 60 ? PBI.orange : PBI.green,
     },
     {
-      id: 'hc-expected',
       label: 'HC Esperado Turno',
       value: (displaySnapshot?.hcExpectedTotal ?? 0).toLocaleString(),
-      sub: `Vs Diseño: ${HC_DESIGN_TOTAL - (displaySnapshot?.hcExpectedTotal ?? 0)} personas`,
-      icon: Clock,
-      deltaType: 'neutral',
+      sub: `Plan del ${filters.turno}`,
+      color: PBI.gray,
     },
     {
-      id: 'hc-presente',
       label: 'HC Presente',
       value: metrics.totalPresent.toLocaleString(),
       sub: `Faltantes: ${metrics.totalExpected - metrics.totalPresent} operadores`,
-      icon: Users,
-      deltaType: metrics.coberturaGeneral < 90 ? 'danger' : metrics.coberturaGeneral < 95 ? 'warning' : 'success',
+      color: metrics.coberturaGeneral < 90 ? PBI.red : metrics.coberturaGeneral < 95 ? PBI.orange : PBI.green,
     },
     {
-      id: 'cobertura',
       label: 'Cobertura Operacional',
       value: `${metrics.coberturaGeneral.toFixed(1)}%`,
-      sub: `vs HC Esperado del Turno`,
-      icon: Activity,
-      deltaType: metrics.coberturaGeneral < 90 ? 'danger' : metrics.coberturaGeneral < 95 ? 'warning' : 'success',
+      sub: 'Asistencia vs HC Esperado Turno',
+      color: metrics.coberturaGeneral < 90 ? PBI.red : metrics.coberturaGeneral < 95 ? PBI.orange : PBI.green,
     },
   ];
 
-  // KPI Row 2 — HPT & Risk
-  const hptDelta = metrics.hptActual - HPT_OBJECTIVE;
-  const kpiRowTwo = [
+  const row2 = [
     {
-      id: 'hpt-obj',
       label: 'HPT Objetivo',
       value: `${HPT_OBJECTIVE.toFixed(1)} hrs`,
-      sub: `Hrs diseño / 49 UPD`,
-      icon: Target,
-      deltaType: 'fixed',
+      sub: '1,498 HC × 8h ÷ 49 UPD',
+      color: PBI.orange,
     },
     {
-      id: 'hpt-actual',
       label: 'HPT Actual',
       value: `${metrics.hptActual.toFixed(1)} hrs`,
-      sub: `Con ${displaySnapshot?.otHabilitada ? 'OT habilitado' : 'Sin OT'} — turno activo`,
-      icon: Clock,
-      deltaType: hptDelta > 20 ? 'danger' : hptDelta > 8 ? 'warning' : 'success',
+      sub: displaySnapshot?.otHabilitada ? 'Con Tiempo Extra habilitado' : 'Sin Tiempo Extra',
+      color: hptDelta > 20 ? PBI.red : hptDelta > 8 ? PBI.orange : PBI.green,
     },
     {
-      id: 'hpt-variacion',
       label: 'Variación HPT',
       value: `${hptDelta > 0 ? '+' : ''}${metrics.hptDiferencia.toFixed(1)}%`,
-      sub: `${hptDelta > 0 ? '+' : ''}${hptDelta.toFixed(1)} hrs sobre el objetivo`,
-      icon: hptDelta > 0 ? TrendingUp : hptDelta < 0 ? TrendingDown : Minus,
-      deltaType: hptDelta > 20 ? 'danger' : hptDelta > 8 ? 'warning' : hptDelta > 0 ? 'warning' : 'success',
+      sub: `${hptDelta > 0 ? '+' : ''}${hptDelta.toFixed(1)} hrs sobre objetivo`,
+      color: hptDelta > 20 ? PBI.red : hptDelta > 8 ? PBI.orange : PBI.green,
     },
     {
-      id: 'riesgo',
       label: 'Riesgo Operacional',
       value: `${metrics.riesgoScore}%`,
       sub: `Nivel: ${metrics.riesgoNivel}`,
-      icon: metrics.riesgoScore >= 70 ? XCircle : metrics.riesgoScore >= 45 ? AlertTriangle : CheckCircle,
-      deltaType: metrics.riesgoScore >= 70 ? 'danger' : metrics.riesgoScore >= 45 ? 'warning' : 'success',
+      color: metrics.riesgoScore >= 70 ? PBI.red : metrics.riesgoScore >= 45 ? PBI.orange : PBI.green,
     },
   ];
 
   return (
-    <div className="space-y-5">
+    <div style={{ fontFamily: PBI.font, color: PBI.white, display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+      {/* ── Section Label ── */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <span style={{ fontSize: 10, fontWeight: 700, color: PBI.muted, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+          Cadena de Headcount
+        </span>
+        <div style={{ flex: 1, height: 1, background: PBI.border }} />
+      </div>
 
       {/* ── ROW 1: Headcount KPI Cards ── */}
-      <section>
-        <div className="flex items-center gap-2 mb-2.5">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-brand-text-muted">
-            Cadena de Headcount
-          </span>
-          <ChevronRight size={10} className="text-brand-text-muted" />
-          <span className="text-[10px] text-brand-text-muted/60">HC Diseño → Contratado → Esperado → Presente → Cobertura</span>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3">
-          {kpiRowOne.map((kpi) => (
-            <KpiCard key={kpi.id} {...kpi} />
-          ))}
-        </div>
-      </section>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 8 }}>
+        {row1.map((k, i) => (
+          <PbiKpiCard key={i} label={k.label} value={k.value} sub={k.sub} accentColor={k.color} />
+        ))}
+      </div>
+
+      {/* ── Section Label ── */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <span style={{ fontSize: 10, fontWeight: 700, color: PBI.muted, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+          Horas por Camión (HPT) y Riesgo
+        </span>
+        <div style={{ flex: 1, height: 1, background: PBI.border }} />
+        <RiskBadge nivel={metrics.riesgoNivel} score={metrics.riesgoScore} />
+      </div>
 
       {/* ── ROW 2: HPT & Risk KPI Cards ── */}
-      <section>
-        <div className="flex items-center gap-2 mb-2.5">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-brand-text-muted">
-            Horas por Camión (HPT) y Riesgo Operacional
-          </span>
-        </div>
-        <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
-          {kpiRowTwo.map((kpi) => (
-            <KpiCard key={kpi.id} {...kpi} />
-          ))}
-        </div>
-      </section>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
+        {row2.map((k, i) => (
+          <PbiKpiCard key={i} label={k.label} value={k.value} sub={k.sub} accentColor={k.color} />
+        ))}
+      </div>
 
-      {/* ── ROW 3: Heatmap + Risk Table ── */}
-      <section className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+      {/* ── ROW 3: Matrix + Horizontal Bar Chart ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: 8 }}>
 
-        {/* Heatmap — occupies 3/5 */}
-        <div className="lg:col-span-3 bg-brand-card border border-brand-border rounded">
-          {/* Panel header */}
-          <div className="flex items-center justify-between px-5 py-3.5 border-b border-brand-border">
-            <div>
-              <h3 className="text-xs font-bold uppercase tracking-widest text-brand-text-secondary">
-                Heatmap Operacional de Planta
-              </h3>
-              <p className="text-[10px] text-brand-text-muted mt-0.5">
-                Cobertura vs HC Esperado por Área — turno activo
-              </p>
+        {/* Power BI Matrix Visual */}
+        <div style={{ background: PBI.card, border: `1px solid ${PBI.border}` }}>
+          <PbiCardHeader
+            title="Matriz Operacional de Cobertura por Área"
+            subtitle={`Cobertura vs. HC Esperado del Turno — ${filters.turno} · ${displaySnapshot?.horario ?? ''}`}
+          >
+            <div style={{ display: 'flex', gap: 12, fontSize: 9, color: PBI.muted, alignItems: 'center' }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <span style={{ width: 10, height: 6, background: PBI.green, opacity: 0.6, display: 'inline-block' }} />
+                ≥95%
+              </span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <span style={{ width: 10, height: 6, background: PBI.orange, opacity: 0.6, display: 'inline-block' }} />
+                90–95%
+              </span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <span style={{ width: 10, height: 6, background: PBI.red, opacity: 0.6, display: 'inline-block' }} />
+                &lt;90%
+              </span>
             </div>
-            <div className="flex items-center gap-2 text-[9px] text-brand-text-muted">
-              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm bg-emerald-500" /> &ge;95%</span>
-              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm bg-yellow-400" /> 90–95%</span>
-              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm bg-red-600" /> &lt;90%</span>
-            </div>
+          </PbiCardHeader>
+          <div style={{ padding: '4px 0', overflowY: 'auto', maxHeight: 380 }}>
+            <PowerBiMatrix areas={metrics.details || []} soloCriticas={false} />
           </div>
-
-          <div className="p-4 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
-            {(metrics.details || []).map((area) => (
-              <AreaHeatCard
-                key={area.nombre}
-                area={area}
-                isSelected={selectedArea === area.nombre}
-                onClick={() => setSelectedArea(prev => prev === area.nombre ? null : area.nombre)}
-              />
-            ))}
-          </div>
-
-          {/* Selected area drill-down preview */}
-          {selectedArea && (() => {
-            const areaData = (metrics.details || []).find(a => a.nombre === selectedArea);
-            if (!areaData?.children?.length) return null;
-            return (
-              <div className="border-t border-brand-border px-5 py-4">
-                <div className="text-[10px] font-bold uppercase tracking-widest text-brand-text-muted mb-3">
-                  Sub-áreas de {selectedArea}
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {areaData.children.map((child) => {
-                    const cov = child.hcExpected > 0 ? (child.actualPresent / child.hcExpected) * 100 : 0;
-                    const st = getCoverageStatus(cov, false);
-                    const barCol = { success: 'bg-emerald-500', warning: 'bg-yellow-400', danger: 'bg-red-600' }[st];
-                    return (
-                      <div key={child.nombre} className="bg-brand-bg border border-brand-border rounded p-3 space-y-2">
-                        <div className="text-[10px] font-semibold text-brand-text-primary">{child.nombre}</div>
-                        <div className="flex justify-between text-[9px] text-brand-text-muted">
-                          <span>{child.actualPresent}/{child.hcExpected}</span>
-                          <span className={`font-bold ${st === 'danger' ? 'text-red-400' : st === 'warning' ? 'text-yellow-400' : 'text-emerald-400'}`}>
-                            {cov.toFixed(1)}%
-                          </span>
-                        </div>
-                        <div className="h-1 w-full bg-brand-border rounded-full">
-                          <div className={`h-full rounded-full ${barCol}`} style={{ width: `${Math.min(cov, 100)}%` }} />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })()}
-        </div>
-
-        {/* Risk Impact Table — occupies 2/5 */}
-        <div className="lg:col-span-2 bg-brand-card border border-brand-border rounded flex flex-col">
-          <div className="flex items-center justify-between px-5 py-3.5 border-b border-brand-border">
-            <div>
-              <h3 className="text-xs font-bold uppercase tracking-widest text-brand-text-secondary">
-                Top Riesgo por Área
-              </h3>
-              <p className="text-[10px] text-brand-text-muted mt-0.5">
-                Ordenado por impacto en HPT — mayor desviación primero
-              </p>
-            </div>
-            <div className={`text-[10px] font-bold px-2.5 py-1 rounded border ${
-              metrics.riesgoNivel === 'Crítico'
-                ? 'bg-red-900/20 text-red-400 border-red-700/40'
-                : metrics.riesgoNivel === 'Alto'
-                ? 'bg-yellow-900/20 text-yellow-400 border-yellow-600/40'
-                : 'bg-emerald-900/20 text-emerald-400 border-emerald-700/40'
-            }`}>
-              {metrics.riesgoNivel}
-            </div>
-          </div>
-          <div className="flex-1 px-5 py-4 overflow-y-auto">
-            <RiskImpactTable
-              areas={metrics.details || []}
-              totalExpected={metrics.totalExpected}
-              hptObjective={HPT_OBJECTIVE}
-              hptActual={metrics.hptActual}
-            />
-          </div>
-          {/* OT Status Footer */}
-          <div className={`px-5 py-3 border-t border-brand-border text-[10px] flex items-center gap-2 ${
-            displaySnapshot?.otHabilitada ? 'text-yellow-400' : 'text-brand-text-muted'
-          }`}>
-            <Zap size={11} className={displaySnapshot?.otHabilitada ? 'text-yellow-400' : 'text-brand-text-muted'} />
-            <span>
-              Tiempo Extra: <b>{displaySnapshot?.otHabilitada ? 'Habilitado — compensando déficit' : 'Deshabilitado — mayor riesgo'}</b>
+          {/* Matrix footer */}
+          <div style={{
+            padding: '8px 16px',
+            borderTop: `1px solid ${PBI.border}`,
+            fontSize: 10, color: PBI.muted,
+            display: 'flex', justifyContent: 'space-between',
+          }}>
+            <span>● Área Crítica — umbral alerta: 95% | ■ Barra de datos condicional (Power BI format)</span>
+            <span style={{ color: PBI.gray }}>
+              OT: <b style={{ color: displaySnapshot?.otHabilitada ? PBI.orange : PBI.muted }}>
+                {displaySnapshot?.otHabilitada ? 'Habilitado' : 'Deshabilitado'}
+              </b>
             </span>
           </div>
         </div>
-      </section>
 
-      {/* ── ROW 4: 30-Day Historical Trend ── */}
-      <section className="bg-brand-card border border-brand-border rounded">
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-brand-border">
-          <div>
-            <h3 className="text-xs font-bold uppercase tracking-widest text-brand-text-secondary">
-              Tendencia Histórica — Últimos 30 Días
-            </h3>
-            <p className="text-[10px] text-brand-text-muted mt-0.5">
-              Cobertura Operacional (%) y HPT Actual (hrs) — línea de referencia HPT Obj: {HPT_OBJECTIVE}
-            </p>
+        {/* Horizontal HPT Impact Bar Chart */}
+        <div style={{ background: PBI.card, border: `1px solid ${PBI.border}`, display: 'flex', flexDirection: 'column' }}>
+          <PbiCardHeader
+            title="Impacto HPT por Área (Descendente)"
+            subtitle="Horas extra generadas por déficit de personal — ordenado de mayor a menor"
+          />
+          <div style={{ flex: 1, padding: '12px 8px 8px', overflowY: 'auto' }}>
+            <HptImpactHorizontalBar areas={metrics.details || []} />
           </div>
-          <div className="flex items-center gap-4 text-[9px] text-brand-text-muted">
-            <span className="flex items-center gap-1.5">
-              <span className="h-0.5 w-5 bg-brand-accent inline-block rounded-full" />
+          <div style={{
+            padding: '8px 16px',
+            borderTop: `1px solid ${PBI.border}`,
+            fontSize: 10, color: PBI.muted,
+            display: 'flex', justifyContent: 'space-between',
+          }}>
+            <span style={{ color: PBI.gray }}>
+              Δ HPT Total:&nbsp;
+              <b style={{ color: hptDelta > 0 ? PBI.red : PBI.green }}>
+                {hptDelta > 0 ? '+' : ''}{hptDelta.toFixed(1)} hrs
+              </b>
+            </span>
+            <span>Objetivo: <b style={{ color: PBI.orange }}>{HPT_OBJECTIVE} hrs</b></span>
+          </div>
+        </div>
+      </div>
+
+      {/* ── ROW 4: Historical Trend ── */}
+      <div style={{ background: PBI.card, border: `1px solid ${PBI.border}` }}>
+        <PbiCardHeader
+          title="Tendencia Histórica — Cobertura Operacional y HPT Actual (30 días)"
+          subtitle={`Referencia fija HPT Objetivo: ${HPT_OBJECTIVE} hrs`}
+        >
+          <div style={{ display: 'flex', gap: 16, fontSize: 10, color: PBI.muted, alignItems: 'center' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+              <span style={{ width: 16, height: 2, background: PBI.blue, display: 'inline-block' }} />
               Cobertura %
             </span>
-            <span className="flex items-center gap-1.5">
-              <span className="h-0.5 w-5 bg-yellow-400 inline-block rounded-full" />
-              HPT Actual
+            <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+              <span style={{ width: 16, height: 2, background: PBI.orange, display: 'inline-block' }} />
+              HPT Real
             </span>
-            <span className="flex items-center gap-1.5">
-              <span className="h-0.5 w-5 bg-red-600 inline-block rounded-full border-dashed" style={{ borderTop: '1px dashed' }} />
-              HPT Obj {HPT_OBJECTIVE}
+            <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+              <span style={{ width: 16, height: 2, background: PBI.red, borderTop: `2px dashed ${PBI.red}`, display: 'inline-block' }} />
+              HPT Obj.
             </span>
           </div>
-        </div>
+        </PbiCardHeader>
 
-        <div className="p-5" style={{ height: 240 }}>
+        <div style={{ padding: '16px 16px 8px', height: 220 }}>
           <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={historicalDays} margin={{ top: 8, right: 16, bottom: 0, left: 0 }}>
+            <ComposedChart data={historicalDays} margin={{ top: 4, right: 48, bottom: 0, left: 0 }}>
               <defs>
-                <linearGradient id="covGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#118DFF" stopOpacity={0.25} />
-                  <stop offset="95%" stopColor="#118DFF" stopOpacity={0} />
+                <linearGradient id="covGradPbi" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor={PBI.blue} stopOpacity={0.2} />
+                  <stop offset="95%" stopColor={PBI.blue} stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid
-                strokeDasharray="3 3"
-                stroke="#2D2D2D"
-                vertical={false}
-              />
+              <CartesianGrid strokeDasharray="2 6" stroke={PBI.border} vertical={false} />
               <XAxis
                 dataKey="label"
-                tick={{ fontSize: 9, fill: '#605E5C', fontFamily: 'Segoe UI' }}
-                axisLine={{ stroke: '#2D2D2D' }}
+                tick={{ fontSize: 9, fill: PBI.muted, fontFamily: PBI.font }}
+                axisLine={{ stroke: PBI.border }}
                 tickLine={false}
                 interval={3}
               />
               <YAxis
                 yAxisId="left"
                 domain={[80, 100]}
-                tick={{ fontSize: 9, fill: '#605E5C', fontFamily: 'Segoe UI' }}
+                tick={{ fontSize: 9, fill: PBI.muted, fontFamily: PBI.font }}
                 axisLine={false}
                 tickLine={false}
                 tickFormatter={(v) => `${v}%`}
@@ -540,79 +653,80 @@ export default function ExecutiveDashboard() {
               <YAxis
                 yAxisId="right"
                 orientation="right"
-                domain={[230, 300]}
-                tick={{ fontSize: 9, fill: '#605E5C', fontFamily: 'Segoe UI' }}
+                domain={[230, 295]}
+                tick={{ fontSize: 9, fill: PBI.muted, fontFamily: PBI.font }}
                 axisLine={false}
                 tickLine={false}
                 tickFormatter={(v) => `${v}h`}
                 width={38}
               />
-              <Tooltip content={<FabricTooltip />} />
-              <ReferenceLine
-                yAxisId="right"
-                y={HPT_OBJECTIVE}
-                stroke="#A80000"
-                strokeDasharray="4 3"
-                strokeWidth={1.5}
-              />
+              <Tooltip content={<PbiTooltip />} />
+              <ReferenceLine yAxisId="right" y={HPT_OBJECTIVE} stroke={PBI.red} strokeDasharray="4 3" strokeWidth={1.5} />
               <Area
                 yAxisId="left"
                 type="monotone"
                 dataKey="coberturaReal"
                 name="Cobertura"
                 unit="%"
-                stroke="#118DFF"
+                stroke={PBI.blue}
                 strokeWidth={2}
-                fill="url(#covGrad)"
+                fill="url(#covGradPbi)"
                 dot={false}
-                activeDot={{ r: 4, strokeWidth: 0, fill: '#118DFF' }}
+                activeDot={{ r: 3, strokeWidth: 0, fill: PBI.blue }}
               />
-              <Line
+              <Area
                 yAxisId="right"
                 type="monotone"
                 dataKey="actualHpt"
-                name="HPT Actual"
+                name="HPT Real"
                 unit=" hrs"
-                stroke="#F1C40F"
+                stroke={PBI.orange}
                 strokeWidth={1.5}
+                fill="transparent"
                 dot={false}
-                activeDot={{ r: 4, strokeWidth: 0, fill: '#F1C40F' }}
+                activeDot={{ r: 3, strokeWidth: 0, fill: PBI.orange }}
               />
             </ComposedChart>
           </ResponsiveContainer>
         </div>
 
-        {/* Summary stats strip below chart */}
-        <div className="border-t border-brand-border px-5 py-3 grid grid-cols-4 gap-4 text-[10px]">
+        {/* Summary stat strip */}
+        <div style={{
+          borderTop: `1px solid ${PBI.border}`,
+          padding: '8px 16px',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(4, 1fr)',
+          gap: 8,
+        }}>
           {[
             {
               label: 'Promedio Cobertura 30d',
               value: `${(historicalDays.reduce((s, d) => s + d.coberturaReal, 0) / historicalDays.length).toFixed(1)}%`,
-              col: 'text-brand-accent'
+              color: PBI.blue,
             },
             {
               label: 'Promedio HPT 30d',
               value: `${(historicalDays.reduce((s, d) => s + d.actualHpt, 0) / historicalDays.length).toFixed(1)} hrs`,
-              col: 'text-yellow-400'
+              color: PBI.orange,
             },
             {
-              label: 'Días sobre HPT Objetivo',
-              value: `${historicalDays.filter(d => d.actualHpt > HPT_OBJECTIVE).length}/${historicalDays.length}`,
-              col: 'text-red-400'
+              label: 'Días HPT sobre Objetivo',
+              value: `${historicalDays.filter((d) => d.actualHpt > HPT_OBJECTIVE).length} / ${historicalDays.length}`,
+              color: PBI.red,
             },
             {
-              label: 'Días con Cobertura < 90%',
-              value: `${historicalDays.filter(d => d.coberturaReal < 90).length}/${historicalDays.length}`,
-              col: 'text-red-400'
-            }
+              label: 'Días Cobertura < 90%',
+              value: `${historicalDays.filter((d) => d.coberturaReal < 90).length} / ${historicalDays.length}`,
+              color: PBI.red,
+            },
           ].map((item, i) => (
-            <div key={i} className="space-y-0.5">
-              <div className="text-brand-text-muted">{item.label}</div>
-              <div className={`font-bold text-sm ${item.col}`}>{item.value}</div>
+            <div key={i}>
+              <div style={{ fontSize: 10, color: PBI.muted }}>{item.label}</div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: item.color, marginTop: 2 }}>{item.value}</div>
             </div>
           ))}
         </div>
-      </section>
+      </div>
     </div>
   );
 }

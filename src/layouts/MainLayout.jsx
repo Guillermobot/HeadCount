@@ -219,131 +219,165 @@ export const MainLayout = ({ children }) => {
             {children}
           </main>
 
-          {/* 5. PANEL DE FILTROS DERECHO (Slicers Pane) */}
-          <div 
-            className={`bg-brand-sidebar border-l border-brand-border flex flex-col transition-all duration-300 z-10 ${
-              filterPaneOpen ? 'w-64' : 'w-0 overflow-hidden border-l-0'
-            }`}
+          {/* 5. PANEL DE FILTROS DERECHO — Power BI Slicers Style */}
+          <div
+            style={{
+              background: '#141414',
+              borderLeft: filterPaneOpen ? '1px solid #333333' : 'none',
+              width: filterPaneOpen ? '256px' : '0px',
+              overflow: filterPaneOpen ? 'visible' : 'hidden',
+              flexShrink: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              transition: 'width 0.25s ease',
+              zIndex: 10,
+            }}
           >
-            {/* Filter Header */}
-            <div className="h-10 flex items-center justify-between px-4 border-b border-brand-border bg-black/10">
-              <span className="text-xs font-bold text-brand-text-secondary uppercase tracking-wider flex items-center gap-1.5">
-                <Filter size={12} />
-                Filtros (Slicers)
+            {/* Slicer Pane Header — Power BI style */}
+            <div style={{ height: 40, display: 'flex', alignItems: 'center', padding: '0 16px', borderBottom: '1px solid #333333', background: '#0F0F0F', flexShrink: 0 }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: '#A6A6A6', textTransform: 'uppercase', letterSpacing: '0.07em', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Filter size={11} />
+                Filtros
               </span>
             </div>
 
-            {/* Filter Content */}
-            <div className="flex-1 p-4 space-y-6 overflow-y-auto text-xs">
-              {/* Date Filter */}
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-brand-text-muted uppercase tracking-wider flex items-center gap-1">
-                  <Calendar size={12} />
-                  Fecha de Operación
-                </label>
-                <select 
-                  value={filters.fecha} 
+            {/* Slicer Content */}
+            <div style={{ flex: 1, padding: '16px 14px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+              {/* ── SLICER: Fecha ── */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <div style={{ fontSize: 9, fontWeight: 700, color: '#666666', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <Calendar size={10} /> Fecha de Operación
+                </div>
+                <select
+                  value={filters.fecha}
                   onChange={(e) => setFilter('fecha', e.target.value)}
-                  className="w-full bg-brand-card border border-brand-border rounded px-2.5 py-1.5 text-brand-text-primary focus:outline-none focus:border-brand-accent cursor-pointer"
+                  style={{ width: '100%', background: '#1E1E1E', border: '1px solid #444444', color: '#FFFFFF', fontSize: 12, padding: '6px 28px 6px 10px', cursor: 'pointer', fontFamily: '"Segoe UI", sans-serif', outline: 'none' }}
                 >
                   <option value="2026-06-10">10 Jun 2026 (Hoy)</option>
                 </select>
               </div>
 
-              {/* Shift Filter */}
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-brand-text-muted uppercase tracking-wider flex items-center gap-1">
-                  <Clock size={12} />
-                  Turno Activo
-                </label>
-                <div className="space-y-1">
-                  {['Turno A', 'Turno B', 'Turno C'].map((turno) => (
-                    <button
-                      key={turno}
-                      onClick={() => setFilter('turno', turno)}
-                      className={`w-full text-left px-3 py-2 rounded border transition-all ${
-                        filters.turno === turno
-                          ? 'bg-brand-accent/10 border-brand-accent text-brand-accent font-semibold'
-                          : 'bg-brand-card border-brand-border text-brand-text-secondary hover:border-brand-text-muted'
-                      }`}
-                    >
-                      {turno}
-                    </button>
-                  ))}
+              {/* ── SLICER: Turno ── */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <div style={{ fontSize: 9, fontWeight: 700, color: '#666666', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <Clock size={10} /> Turno Activo
                 </div>
-              </div>
-
-              {/* Area Filter Option */}
-              <div className="pt-4 border-t border-brand-border space-y-3">
-                <label className="flex items-center gap-2 cursor-pointer text-brand-text-secondary hover:text-brand-text-primary">
-                  <input 
-                    type="checkbox"
-                    checked={filters.soloCriticas}
-                    onChange={(e) => setFilter('soloCriticas', e.target.checked)}
-                    className="rounded bg-brand-card border-brand-border text-brand-accent focus:ring-0 cursor-pointer"
-                  />
-                  <span>Ver solo Áreas Críticas</span>
-                </label>
-              </div>
-
-              {/* Quick Actions Panel */}
-              <div className="pt-6 border-t border-brand-border space-y-3">
-                <div className="text-[10px] font-bold text-brand-text-muted uppercase tracking-wider">
-                  Acciones Rápidas
-                </div>
-                <button 
-                  onClick={() => alert("Reporte exportado a Excel (simulado)")}
-                  className="w-full flex items-center justify-center gap-2 bg-brand-card hover:bg-brand-card/80 border border-brand-border text-brand-text-secondary hover:text-brand-text-primary py-2 rounded font-medium transition-colors"
-                >
-                  <FileSpreadsheet size={14} className="text-brand-success" />
-                  <span>Exportar Datos (XLSX)</span>
-                </button>
-                <button 
-                  onClick={() => alert("Información de estándares de planta:\n49 UPD de diseño\n1498 empleados asignados\nTurno A: 06:00 - 14:00\nTurno B: 14:00 - 22:00\nTurno C: 22:00 - 06:00")}
-                  className="w-full flex items-center justify-center gap-2 bg-brand-card hover:bg-brand-card/80 border border-brand-border text-brand-text-secondary hover:text-brand-text-primary py-2 rounded font-medium transition-colors"
-                >
-                  <HelpCircle size={14} />
-                  <span>Estándares de Planta</span>
-                </button>
-              </div>
-
-              {/* Interactive Simulation Sandbox Quick Settings */}
-              <div className="pt-6 border-t border-brand-border">
-                <div className="bg-brand-card border border-brand-border rounded p-3 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-[10px] text-brand-text-secondary uppercase">Sandbox Rápido</span>
-                    {isSimulating && (
-                      <button 
-                        onClick={resetSimulation} 
-                        className="text-[10px] text-brand-danger hover:underline flex items-center gap-0.5"
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  {['Turno A', 'Turno B', 'Turno C'].map((turno) => {
+                    const isActive = filters.turno === turno;
+                    return (
+                      <button
+                        key={turno}
+                        onClick={() => setFilter('turno', turno)}
+                        style={{
+                          width: '100%',
+                          textAlign: 'left',
+                          padding: '7px 10px',
+                          background: isActive ? 'rgba(17,141,255,0.12)' : '#1E1E1E',
+                          border: isActive ? '1px solid #118DFF' : '1px solid #444444',
+                          color: isActive ? '#118DFF' : '#A6A6A6',
+                          fontSize: 12,
+                          fontWeight: isActive ? 700 : 400,
+                          fontFamily: '"Segoe UI", sans-serif',
+                          cursor: 'pointer',
+                          transition: 'all 0.15s',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 8,
+                        }}
                       >
-                        <RotateCcw size={8} /> Restablecer
+                        <span style={{ width: 8, height: 8, background: isActive ? '#118DFF' : '#444444', display: 'inline-block', flexShrink: 0 }} />
+                        {turno}
                       </button>
-                    )}
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* ── SLICER: Solo Críticas ── */}
+              <div style={{ paddingTop: 12, borderTop: '1px solid #333333' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                  <div
+                    onClick={() => setFilter('soloCriticas', !filters.soloCriticas)}
+                    style={{
+                      width: 14, height: 14,
+                      border: `1px solid ${filters.soloCriticas ? '#118DFF' : '#444444'}`,
+                      background: filters.soloCriticas ? '#118DFF' : 'transparent',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      flexShrink: 0, cursor: 'pointer',
+                    }}
+                  >
+                    {filters.soloCriticas && <span style={{ color: '#FFFFFF', fontSize: 10, lineHeight: 1 }}>✓</span>}
                   </div>
-                  <p className="text-[10px] text-brand-text-muted leading-relaxed">
-                    Modifica variables para evaluar el impacto en HPT y Riesgo en tiempo real.
-                  </p>
-                  <div className="space-y-2 pt-1">
-                    <div className="flex justify-between items-center text-[10px]">
-                      <span className="text-brand-text-secondary">Tiempo Extra (OT):</span>
-                      <span className="font-semibold text-brand-text-primary">
-                        {displaySnapshot?.otHabilitada ? 'Habilitado' : 'Deshabilitado'}
-                      </span>
-                    </div>
+                  <span style={{ fontSize: 12, color: '#A6A6A6', fontFamily: '"Segoe UI", sans-serif' }}>Solo Áreas Críticas</span>
+                </label>
+              </div>
+
+              {/* ── Divider ── */}
+              <div style={{ borderTop: '1px solid #333333' }} />
+
+              {/* ── WHAT-IF PARAMETER: Tiempo Extra ── */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div style={{ fontSize: 9, fontWeight: 700, color: '#666666', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                  Parámetro What-If
+                </div>
+                <div style={{ background: '#252525', border: '1px solid #444444', padding: '10px 12px' }}>
+                  <div style={{ fontSize: 10, color: '#A6A6A6', marginBottom: 6, fontFamily: '"Segoe UI", sans-serif' }}>
+                    Tiempo Extra (OT)
+                  </div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: displaySnapshot?.otHabilitada ? '#E66C37' : '#666666', marginBottom: 10, fontFamily: '"Segoe UI", sans-serif' }}>
+                    {displaySnapshot?.otHabilitada ? 'Habilitado' : 'Deshabilitado'}
+                  </div>
+                  <button
+                    onClick={() => {
+                      startSimulation();
+                      setTimeout(() => { updateSimulatedOt(!displaySnapshot?.otHabilitada); }, 50);
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '7px 0',
+                      background: displaySnapshot?.otHabilitada ? 'rgba(230,108,55,0.12)' : 'rgba(17,141,255,0.10)',
+                      border: `1px solid ${displaySnapshot?.otHabilitada ? '#E66C37' : '#118DFF'}`,
+                      color: displaySnapshot?.otHabilitada ? '#E66C37' : '#118DFF',
+                      fontSize: 11,
+                      fontWeight: 700,
+                      fontFamily: '"Segoe UI", sans-serif',
+                      cursor: 'pointer',
+                      letterSpacing: '0.04em',
+                    }}
+                  >
+                    {displaySnapshot?.otHabilitada ? '▣ Deshabilitar OT' : '▷ Habilitar OT'}
+                  </button>
+                  {isSimulating && (
                     <button
-                      onClick={() => {
-                        startSimulation();
-                        setTimeout(() => {
-                          updateSimulatedOt(!displaySnapshot?.otHabilitada);
-                        }, 50);
-                      }}
-                      className="w-full py-1.5 rounded bg-brand-accent/20 hover:bg-brand-accent/30 border border-brand-accent/40 text-brand-accent font-semibold text-[10px] transition-colors"
+                      onClick={resetSimulation}
+                      style={{ marginTop: 6, width: '100%', padding: '5px 0', background: 'transparent', border: '1px solid #444444', color: '#666666', fontSize: 10, fontFamily: '"Segoe UI", sans-serif', cursor: 'pointer' }}
                     >
-                      Alternar Tiempo Extra
+                      ↺ Restablecer datos reales
                     </button>
+                  )}
+                  <div style={{ marginTop: 8, fontSize: 9, color: '#555555', lineHeight: 1.5, fontFamily: '"Segoe UI", sans-serif' }}>
+                    Modifica este parámetro para evaluar el impacto en HPT y Riesgo Operacional en tiempo real.
                   </div>
                 </div>
+              </div>
+
+              {/* ── Acciones ── */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingTop: 4, borderTop: '1px solid #333333' }}>
+                <div style={{ fontSize: 9, fontWeight: 700, color: '#666666', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 2 }}>Acciones</div>
+                <button
+                  onClick={() => alert('Reporte exportado a Excel (simulado)')}
+                  style={{ width: '100%', padding: '7px', background: '#1E1E1E', border: '1px solid #444444', color: '#A6A6A6', fontSize: 11, fontFamily: '"Segoe UI", sans-serif', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                >
+                  <FileSpreadsheet size={12} style={{ color: '#00B01D' }} /> Exportar (XLSX)
+                </button>
+                <button
+                  onClick={() => alert('49 UPD — 1498 HC Diseño — 244.6 HPT Objetivo\n\nTurno A: 06:00–14:00\nTurno B: 14:00–22:00\nTurno C: 22:00–06:00')}
+                  style={{ width: '100%', padding: '7px', background: '#1E1E1E', border: '1px solid #444444', color: '#A6A6A6', fontSize: 11, fontFamily: '"Segoe UI", sans-serif', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                >
+                  <HelpCircle size={12} /> Estándares de Planta
+                </button>
               </div>
 
             </div>

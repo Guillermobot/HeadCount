@@ -2,32 +2,74 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Power BI Native Font & Base Reset ── */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
 html, body, #root {
-  background-color: #111111;
-  color: #F3F2F1;
-  font-family: "Segoe UI", system-ui, sans-serif;
+  background-color: #121212;
+  color: #FFFFFF;
+  font-family: "Segoe UI", "wf_standard-font", Arial, sans-serif;
+  font-size: 13px;
+  line-height: 1.4;
   margin: 0;
   padding: 0;
   width: 100%;
   height: 100%;
   overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Custom scrollbar to match Power BI dark style */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+/* ── Power BI Dark Scrollbar ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #1E1E1E; }
+::-webkit-scrollbar-thumb { background: #444444; border-radius: 0; }
+::-webkit-scrollbar-thumb:hover { background: #555555; }
+
+/* ── Power BI Slicer / Select Overrides ── */
+select {
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23A6A6A6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 28px !important;
 }
 
-::-webkit-scrollbar-track {
-  background: #161616;
+/* ── Eliminate default button styles ── */
+button { cursor: pointer; border: none; background: none; }
+
+/* ── Power BI table styles ── */
+.pbi-matrix td, .pbi-matrix th {
+  padding: 6px 10px;
+  white-space: nowrap;
 }
 
-::-webkit-scrollbar-thumb {
-  background: #2D2D2D;
-  border-radius: 4px;
+.pbi-matrix tbody tr:hover {
+  background-color: rgba(255,255,255,0.04);
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: #3E3E3E;
+/* ── What-If Parameter toggle ── */
+.whatif-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: #252525;
+  border: 1px solid #444444;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.whatif-toggle:hover { background: #2A2A2A; }
+.whatif-toggle.active { border-color: #118DFF; }
+
+/* ── Power BI KPI Card accent line ── */
+.pbi-accent-top::before {
+  content: '';
+  display: block;
+  height: 3px;
+  margin-bottom: 0;
 }
