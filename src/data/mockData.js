@@ -1,410 +1,185 @@
 import { HC_DESIGN_TOTAL } from './constants';
 
-// ─────────────────────────────────────────────────────────────────
-// HC DISEÑO DISTRIBUTION (Total = 1,498 — Diseño Ingeniería Industrial)
-// Distribución proporcional estimada hasta recibir detalle completo del HCO
-// ─────────────────────────────────────────────────────────────────
-
-// HC Contratado real confirmado (vs 1,498 diseño → brecha: -66 vacantes / -4.4%)
 export const HC_CONTRATADO = 1432;
 
-// ─────────────────────────────────────────────────────────────────
-// LABOR BUCKETS — Dimensiones transversales de categorización (HCO)
-// Aplican a todas las áreas como capa de clasificación del operador
-// ─────────────────────────────────────────────────────────────────
 export const laborBuckets = [
-  { id: 'fixed',        label: 'Fixed Crews',            descripcion: 'Plantillas fijas — indispensables para mantener el ritmo base de línea' },
-  { id: 'temporary',    label: 'Temporary Crews (LBT)',   descripcion: 'Plantillas temporales — flexibilidad operativa y balanceo de línea' },
-  { id: 'outbound',     label: 'Outbound',               descripcion: 'Personal enfocado en la salida y liberación del producto terminado' },
-  { id: 'gatekeepers',  label: 'Gate Keepers',           descripcion: 'Filtros de calidad y contención en transiciones críticas de la línea' },
-  { id: 'cng',          label: 'CNG',                    descripcion: 'Personal/estaciones especializadas en rutinas para unidades Gas Natural' },
-  { id: 'export',       label: 'Export',                 descripcion: 'Requerimientos específicos de ensamblaje o preparación para exportación' },
-  { id: 'online_short', label: 'Online Shortages',       descripcion: 'Cuadrillas de mitigación de faltantes de material dentro de la línea' },
-  { id: 'offline_short',label: 'Offline Shortages',      descripcion: 'Cuadrillas de mitigación de faltantes de material fuera de la línea' },
-  { id: 'pushouts',     label: 'Push Outs',              descripcion: 'Personal para manejo de unidades extraídas de línea por retrabajo mayor' },
-  { id: 'recovery',     label: 'Recovery (0% TR)',       descripcion: 'Equipos de recuperación operando fuera del Takt Rate principal' },
-  { id: 'func_tests',   label: 'Functional Tests',       descripcion: 'Pruebas dinámicas y funcionales del camión terminado' },
-  { id: 'delivery',     label: 'Delivery / Touch Up',    descripcion: 'Proceso final de entrega, estética y retoques del producto' },
-  { id: 'truck_log',    label: 'Truck Logistics',        descripcion: 'Movimientos físicos de unidades terminadas en patio' },
+  { id: 'fixed',        label: 'Fixed Crews',            descripcion: 'Essential fixed staff for base line rate' },
+  { id: 'temporary',    label: 'Temporary Crews (LBT)',   descripcion: 'Temporary and line balancing staff' },
+  { id: 'outbound',     label: 'Outbound',               descripcion: 'Outbound and finished product release' },
+  { id: 'gatekeepers',  label: 'Gate Keepers',           descripcion: 'Quality filters and containment' },
+  { id: 'cng',          label: 'CNG',                    descripcion: 'Natural Gas units specialized staff' },
+  { id: 'export',       label: 'Export',                 descripcion: 'Export preparation requirements' },
+  { id: 'online_short', label: 'Online Shortages',       descripcion: 'Online material shortage mitigation' },
+  { id: 'offline_short',label: 'Offline Shortages',      descripcion: 'Offline material shortage mitigation' },
+  { id: 'pushouts',     label: 'Push Outs',              descripcion: 'Major rework extracted units handling' },
+  { id: 'recovery',     label: 'Recovery (0% TR)',       descripcion: 'Recovery teams outside main Takt Rate' },
+  { id: 'func_tests',   label: 'Functional Tests',       descripcion: 'Finished truck dynamic testing' },
+  { id: 'delivery',     label: 'Delivery / Touch Up',    descripcion: 'Final touch up and delivery process' },
+  { id: 'truck_log',    label: 'Truck Logistics',        descripcion: 'Finished trucks yard logistics' },
 ];
 
-// ─────────────────────────────────────────────────────────────────
-// ÁREA TEMPLATE — 9 áreas reales del HCO (Distribución HC estimada)
-// Sub-áreas jerárquicas confirmadas por análisis del HCO Diseño
-// Los headcounts exactos por sub-área quedan pendientes del archivo HCO detallado
-// ─────────────────────────────────────────────────────────────────
-
-const AREA_DESIGN = {
-  lineaEnsamble:    380,   // Línea de Ensamble (principal - ritmo directo de producción)
-  ensamblesMayores: 250,   // Ensambles Mayores (motor, cabina, sleeper)
-  kenfab:           280,   // Kenfab / Fabricación interna (frame, metales)
-  plasticos:         90,   // Plásticos (cabinas, bumpers, interiores)
-  materiales:       168,   // Materiales, Logística y Abastecimiento
-  calidad:          100,   // Calidad (Gate Keepers, Funcionales, Delivery)
-  mantenimiento:     90,   // Mantenimiento (equipo y facilities)
-  ingenieria:        70,   // Ingeniería Industrial y MFC
-  soporte:           70,   // Soporte Técnico / Facilities / Dirección
-  // TOTAL = 1,498 ✅
+const computePresent = (node, multiplier) => {
+  if (node.children && node.children.length > 0) {
+    node.children = node.children.map(c => computePresent(c, multiplier));
+    node.actualPresent = node.children.reduce((s, c) => s + c.actualPresent, 0);
+  } else {
+    node.actualPresent = Math.round(node.hcExpected * multiplier);
+  }
+  return node;
 };
 
-// ─────────────────────────────────────────────────────────────────
-// SNAPSHOTS (3 turnos — 10 Jun 2026)
-// ─────────────────────────────────────────────────────────────────
-
-export const mockSnapshots = [
-
-  // ──────────────────────────────────────────
-  // TURNO A — Escenario de presión moderada-alta
-  // ──────────────────────────────────────────
+const buildBaseHierarchy = () => [
   {
-    id: "2026-06-10-A",
-    fecha: "2026-06-10",
-    turno: "Turno A",
-    horario: "06:00 – 14:00",
-    hcContratado: HC_CONTRATADO,       // 1,432 (real)
-    hcExpectedTotal: 1430,             // Plan del turno
-    otHabilitada: true,
-    areas: [
-      {
-        nombre: "Línea de Ensamble",
-        hcDesign: AREA_DESIGN.lineaEnsamble,
-        hcExpected: 365,
-        actualPresent: 310,
-        isCritical: true,
-        laborBuckets: ['fixed', 'temporary', 'cng', 'export'],
-        children: [
-          { nombre: "Trim Line",            hcDesign: 120, hcExpected: 115, actualPresent: 95 },
-          { nombre: "Chassis Line",         hcDesign: 100, hcExpected:  96, actualPresent: 82 },
-          { nombre: "Final Line",           hcDesign:  90, hcExpected:  87, actualPresent: 76 },
-          { nombre: "CNG Specialization",   hcDesign:  40, hcExpected:  38, actualPresent: 32 },
-          { nombre: "Export Specialization",hcDesign:  30, hcExpected:  29, actualPresent: 25 },
-        ]
-      },
-      {
-        nombre: "Ensambles Mayores",
-        hcDesign: AREA_DESIGN.ensamblesMayores,
-        hcExpected: 240,
-        actualPresent: 228,
-        isCritical: true,
-        laborBuckets: ['fixed', 'temporary'],
-        children: [
-          { nombre: "Engine Assembly",      hcDesign:  90, hcExpected:  86, actualPresent: 82 },
-          { nombre: "Cab Assembly",         hcDesign: 100, hcExpected:  96, actualPresent: 92 },
-          { nombre: "Sleeper Assembly",     hcDesign:  60, hcExpected:  58, actualPresent: 54 },
-        ]
-      },
-      {
-        nombre: "Kenfab",
-        hcDesign: AREA_DESIGN.kenfab,
-        hcExpected: 270,
-        actualPresent: 220,
-        isCritical: true,
-        laborBuckets: ['fixed', 'temporary', 'recovery'],
-        children: [
-          { nombre: "Frame & Rails",        hcDesign: 100, hcExpected:  96, actualPresent: 78 },
-          { nombre: "Cab Fabrication",      hcDesign: 100, hcExpected:  96, actualPresent: 76 },
-          { nombre: "Sheet Metal & X-Members", hcDesign: 80, hcExpected: 78, actualPresent: 66 },
-        ]
-      },
-      {
-        nombre: "Plásticos",
-        hcDesign: AREA_DESIGN.plasticos,
-        hcExpected: 85,
-        actualPresent: 80,
-        isCritical: false,
-        laborBuckets: ['fixed'],
-      },
-      {
-        nombre: "Materiales / Logística",
-        hcDesign: AREA_DESIGN.materiales,
-        hcExpected: 160,
-        actualPresent: 148,
-        isCritical: true,
-        laborBuckets: ['online_short', 'offline_short', 'truck_log', 'outbound'],
-        children: [
-          { nombre: "Line Feeding (Online)", hcDesign: 70, hcExpected: 66, actualPresent: 61 },
-          { nombre: "Offline Shortages",    hcDesign:  40, hcExpected:  38, actualPresent: 35 },
-          { nombre: "Truck Logistics",      hcDesign:  35, hcExpected:  34, actualPresent: 32 },
-          { nombre: "Outbound / Delivery",  hcDesign:  23, hcExpected:  22, actualPresent: 20 },
-        ]
-      },
-      {
-        nombre: "Calidad",
-        hcDesign: AREA_DESIGN.calidad,
-        hcExpected: 95,
-        actualPresent: 88,
-        isCritical: false,
-        laborBuckets: ['gatekeepers', 'func_tests', 'pushouts', 'recovery', 'delivery'],
-        children: [
-          { nombre: "Gate Keepers",         hcDesign:  35, hcExpected:  33, actualPresent: 30 },
-          { nombre: "Functional Tests",     hcDesign:  30, hcExpected:  29, actualPresent: 27 },
-          { nombre: "Push Outs / Recovery", hcDesign:  20, hcExpected:  19, actualPresent: 17 },
-          { nombre: "Delivery & Touch Up",  hcDesign:  15, hcExpected:  14, actualPresent: 14 },
-        ]
-      },
-      {
-        nombre: "Mantenimiento",
-        hcDesign: AREA_DESIGN.mantenimiento,
-        hcExpected: 85,
-        actualPresent: 82,
-        isCritical: false,
-        laborBuckets: ['fixed'],
-      },
-      {
-        nombre: "Ingeniería Industrial y MFC",
-        hcDesign: AREA_DESIGN.ingenieria,
-        hcExpected: 67,
-        actualPresent: 64,
-        isCritical: false,
-        laborBuckets: ['fixed'],
-      },
-      {
-        nombre: "Soporte / Facilities / Dir.",
-        hcDesign: AREA_DESIGN.soporte,
-        hcExpected: 63,
-        actualPresent: 60,
-        isCritical: false,
-        laborBuckets: ['fixed'],
-      },
+    nombre: "Assembly", hcDesign: 853, hcExpected: 853, isCritical: true, laborBuckets: ['fixed', 'temporary', 'cng', 'export'],
+    children: [
+      { nombre: "LEC I", hcDesign: 214, hcExpected: 214, children: [
+        { nombre: "110 Frame I", hcDesign: 39, hcExpected: 39 },
+        { nombre: "122 Frame II", hcDesign: 29, hcExpected: 29 },
+        { nombre: "111 Valves", hcDesign: 38, hcExpected: 38 },
+        { nombre: "112 Axles Set", hcDesign: 36, hcExpected: 36 },
+        { nombre: "119 Axles Trim", hcDesign: 46, hcExpected: 46 },
+        { nombre: "48 Chassis Paint", hcDesign: 26, hcExpected: 26 }
+      ]},
+      { nombre: "LEC II", hcDesign: 144, hcExpected: 144, children: [
+        { nombre: "113 Engines Set", hcDesign: 34, hcExpected: 34 },
+        { nombre: "120 Engines Trim", hcDesign: 27, hcExpected: 27 },
+        { nombre: "121 Tanks Installation", hcDesign: 20, hcExpected: 20 },
+        { nombre: "114 Cab Set", hcDesign: 26, hcExpected: 26 },
+        { nombre: "115 Hood Set", hcDesign: 18, hcExpected: 18 },
+        { nombre: "116 EOL", hcDesign: 19, hcExpected: 19 }
+      ]},
+      { nombre: "LEM I", hcDesign: 162, hcExpected: 162, children: [
+        { nombre: "36 Cab Build", hcDesign: 0, hcExpected: 0 },
+        { nombre: "40 NGP Build", hcDesign: 34, hcExpected: 34 },
+        { nombre: "37 Sleeper Build", hcDesign: 0, hcExpected: 0 },
+        { nombre: "32 Cab Build 320", hcDesign: 20, hcExpected: 20 },
+        { nombre: "38 Paint Prep", hcDesign: 26, hcExpected: 26 },
+        { nombre: "33 Main Paint", hcDesign: 36, hcExpected: 36 },
+        { nombre: "34 Miscellaneous", hcDesign: 46, hcExpected: 46 }
+      ]},
+      { nombre: "LEM II", hcDesign: 144, hcExpected: 144, children: [
+        { nombre: "35 Cab Trim I", hcDesign: 32, hcExpected: 32 },
+        { nombre: "41 Cab Trim II", hcDesign: 45, hcExpected: 45 },
+        { nombre: "47 Sleeper Trim", hcDesign: 9, hcExpected: 9 },
+        { nombre: "39 Cab Trim 320", hcDesign: 31, hcExpected: 31 },
+        { nombre: "Outbound", hcDesign: 8, hcExpected: 8 },
+        { nombre: "147 LF Conversion", hcDesign: 0, hcExpected: 0 },
+        { nombre: "31 Hood Trim", hcDesign: 9, hcExpected: 9 },
+        { nombre: "45 Fuel Tanks", hcDesign: 10, hcExpected: 10 }
+      ]},
+      { nombre: "Test & Touch Up", hcDesign: 153, hcExpected: 153, children: [
+        { nombre: "Functional Tests", hcDesign: 30, hcExpected: 30 },
+        { nombre: "Recovery", hcDesign: 13, hcExpected: 13 },
+        { nombre: "Complex Defects", hcDesign: 7, hcExpected: 7 },
+        { nombre: "Delivery (Small Tent)", hcDesign: 4, hcExpected: 4 },
+        { nombre: "Delivery (Big Tent)", hcDesign: 65, hcExpected: 65 },
+        { nombre: "Logistics & Buffers", hcDesign: 12, hcExpected: 12 },
+        { nombre: "Touch Up", hcDesign: 22, hcExpected: 22 }
+      ]},
+      { nombre: "Assembly Support", hcDesign: 36, hcExpected: 36, children: [
+        { nombre: "PPS / Tool Shop", hcDesign: 6, hcExpected: 6 },
+        { nombre: "Delivery Ready", hcDesign: 7, hcExpected: 7 },
+        { nombre: "Offline Shortages & PTC", hcDesign: 16, hcExpected: 16 },
+        { nombre: "Trainers", hcDesign: 7, hcExpected: 7 }
+      ]}
     ]
   },
-
-  // ──────────────────────────────────────────
-  // TURNO B — Escenario saludable (mejor cobertura)
-  // ──────────────────────────────────────────
   {
-    id: "2026-06-10-B",
-    fecha: "2026-06-10",
-    turno: "Turno B",
-    horario: "14:00 – 22:00",
-    hcContratado: HC_CONTRATADO,
-    hcExpectedTotal: 1471,
-    otHabilitada: false,
-    areas: [
-      {
-        nombre: "Línea de Ensamble",
-        hcDesign: AREA_DESIGN.lineaEnsamble,
-        hcExpected: 375,
-        actualPresent: 362,
-        isCritical: true,
-        laborBuckets: ['fixed', 'temporary', 'cng', 'export'],
-        children: [
-          { nombre: "Trim Line",             hcDesign: 120, hcExpected: 118, actualPresent: 115 },
-          { nombre: "Chassis Line",          hcDesign: 100, hcExpected:  98, actualPresent:  95 },
-          { nombre: "Final Line",            hcDesign:  90, hcExpected:  89, actualPresent:  87 },
-          { nombre: "CNG Specialization",    hcDesign:  40, hcExpected:  40, actualPresent:  38 },
-          { nombre: "Export Specialization", hcDesign:  30, hcExpected:  30, actualPresent:  27 },
-        ]
-      },
-      {
-        nombre: "Ensambles Mayores",
-        hcDesign: AREA_DESIGN.ensamblesMayores,
-        hcExpected: 245,
-        actualPresent: 238,
-        isCritical: true,
-        laborBuckets: ['fixed', 'temporary'],
-        children: [
-          { nombre: "Engine Assembly",       hcDesign:  90, hcExpected:  88, actualPresent:  86 },
-          { nombre: "Cab Assembly",          hcDesign: 100, hcExpected:  98, actualPresent:  96 },
-          { nombre: "Sleeper Assembly",      hcDesign:  60, hcExpected:  59, actualPresent:  56 },
-        ]
-      },
-      {
-        nombre: "Kenfab",
-        hcDesign: AREA_DESIGN.kenfab,
-        hcExpected: 275,
-        actualPresent: 262,
-        isCritical: true,
-        laborBuckets: ['fixed', 'temporary', 'recovery'],
-        children: [
-          { nombre: "Frame & Rails",         hcDesign: 100, hcExpected:  99, actualPresent:  95 },
-          { nombre: "Cab Fabrication",       hcDesign: 100, hcExpected:  98, actualPresent:  93 },
-          { nombre: "Sheet Metal & X-Members", hcDesign: 80, hcExpected: 78, actualPresent:  74 },
-        ]
-      },
-      {
-        nombre: "Plásticos",
-        hcDesign: AREA_DESIGN.plasticos,
-        hcExpected: 88,
-        actualPresent: 85,
-        isCritical: false,
-        laborBuckets: ['fixed'],
-      },
-      {
-        nombre: "Materiales / Logística",
-        hcDesign: AREA_DESIGN.materiales,
-        hcExpected: 165,
-        actualPresent: 158,
-        isCritical: true,
-        laborBuckets: ['online_short', 'offline_short', 'truck_log', 'outbound'],
-        children: [
-          { nombre: "Line Feeding (Online)", hcDesign: 70, hcExpected: 68, actualPresent:  65 },
-          { nombre: "Offline Shortages",    hcDesign:  40, hcExpected:  40, actualPresent:  38 },
-          { nombre: "Truck Logistics",      hcDesign:  35, hcExpected:  35, actualPresent:  34 },
-          { nombre: "Outbound / Delivery",  hcDesign:  23, hcExpected:  22, actualPresent:  21 },
-        ]
-      },
-      {
-        nombre: "Calidad",
-        hcDesign: AREA_DESIGN.calidad,
-        hcExpected: 98,
-        actualPresent: 95,
-        isCritical: false,
-        laborBuckets: ['gatekeepers', 'func_tests', 'pushouts', 'recovery', 'delivery'],
-        children: [
-          { nombre: "Gate Keepers",         hcDesign:  35, hcExpected:  34, actualPresent:  33 },
-          { nombre: "Functional Tests",     hcDesign:  30, hcExpected:  30, actualPresent:  29 },
-          { nombre: "Push Outs / Recovery", hcDesign:  20, hcExpected:  20, actualPresent:  19 },
-          { nombre: "Delivery & Touch Up",  hcDesign:  15, hcExpected:  14, actualPresent:  14 },
-        ]
-      },
-      {
-        nombre: "Mantenimiento",
-        hcDesign: AREA_DESIGN.mantenimiento,
-        hcExpected: 88,
-        actualPresent: 86,
-        isCritical: false,
-        laborBuckets: ['fixed'],
-      },
-      {
-        nombre: "Ingeniería Industrial y MFC",
-        hcDesign: AREA_DESIGN.ingenieria,
-        hcExpected: 69,
-        actualPresent: 67,
-        isCritical: false,
-        laborBuckets: ['fixed'],
-      },
-      {
-        nombre: "Soporte / Facilities / Dir.",
-        hcDesign: AREA_DESIGN.soporte,
-        hcExpected: 68,
-        actualPresent: 65,
-        isCritical: false,
-        laborBuckets: ['fixed'],
-      },
+    nombre: "Fabrication", hcDesign: 230, hcExpected: 230, isCritical: true, laborBuckets: ['fixed', 'temporary'],
+    children: [
+      { nombre: "Kenfab", hcDesign: 122, hcExpected: 122, children: [
+        { nombre: "Kenfab Direct", hcDesign: 98, hcExpected: 98 },
+        { nombre: "Production Kenfab", hcDesign: 24, hcExpected: 24 }
+      ]},
+      { nombre: "Plastics", hcDesign: 108, hcExpected: 108, children: [
+        { nombre: "Plastics Direct", hcDesign: 88, hcExpected: 88 },
+        { nombre: "Production Plastics", hcDesign: 20, hcExpected: 20 }
+      ]}
     ]
   },
-
-  // ──────────────────────────────────────────
-  // TURNO C — Escenario crítico (turno nocturno — mayor ausentismo)
-  // ──────────────────────────────────────────
   {
-    id: "2026-06-10-C",
-    fecha: "2026-06-10",
-    turno: "Turno C",
-    horario: "22:00 – 06:00",
-    hcContratado: HC_CONTRATADO,
-    hcExpectedTotal: 1350,
-    otHabilitada: true,
-    areas: [
-      {
-        nombre: "Línea de Ensamble",
-        hcDesign: AREA_DESIGN.lineaEnsamble,
-        hcExpected: 350,
-        actualPresent: 278,
-        isCritical: true,
-        laborBuckets: ['fixed', 'temporary', 'cng', 'export'],
-        children: [
-          { nombre: "Trim Line",             hcDesign: 120, hcExpected: 112, actualPresent:  88 },
-          { nombre: "Chassis Line",          hcDesign: 100, hcExpected:  94, actualPresent:  74 },
-          { nombre: "Final Line",            hcDesign:  90, hcExpected:  85, actualPresent:  68 },
-          { nombre: "CNG Specialization",    hcDesign:  40, hcExpected:  36, actualPresent:  28 },
-          { nombre: "Export Specialization", hcDesign:  30, hcExpected:  23, actualPresent:  20 },
-        ]
-      },
-      {
-        nombre: "Ensambles Mayores",
-        hcDesign: AREA_DESIGN.ensamblesMayores,
-        hcExpected: 230,
-        actualPresent: 190,
-        isCritical: true,
-        laborBuckets: ['fixed', 'temporary'],
-        children: [
-          { nombre: "Engine Assembly",       hcDesign:  90, hcExpected:  82, actualPresent:  68 },
-          { nombre: "Cab Assembly",          hcDesign: 100, hcExpected:  92, actualPresent:  76 },
-          { nombre: "Sleeper Assembly",      hcDesign:  60, hcExpected:  56, actualPresent:  46 },
-        ]
-      },
-      {
-        nombre: "Kenfab",
-        hcDesign: AREA_DESIGN.kenfab,
-        hcExpected: 255,
-        actualPresent: 195,
-        isCritical: true,
-        laborBuckets: ['fixed', 'temporary', 'recovery'],
-        children: [
-          { nombre: "Frame & Rails",         hcDesign: 100, hcExpected:  95, actualPresent:  72 },
-          { nombre: "Cab Fabrication",       hcDesign: 100, hcExpected:  95, actualPresent:  74 },
-          { nombre: "Sheet Metal & X-Members", hcDesign: 80, hcExpected: 65, actualPresent:  49 },
-        ]
-      },
-      {
-        nombre: "Plásticos",
-        hcDesign: AREA_DESIGN.plasticos,
-        hcExpected: 80,
-        actualPresent: 70,
-        isCritical: false,
-        laborBuckets: ['fixed'],
-      },
-      {
-        nombre: "Materiales / Logística",
-        hcDesign: AREA_DESIGN.materiales,
-        hcExpected: 150,
-        actualPresent: 128,
-        isCritical: true,
-        laborBuckets: ['online_short', 'offline_short', 'truck_log', 'outbound'],
-        children: [
-          { nombre: "Line Feeding (Online)", hcDesign: 70, hcExpected: 62, actualPresent:  52 },
-          { nombre: "Offline Shortages",    hcDesign:  40, hcExpected:  36, actualPresent:  32 },
-          { nombre: "Truck Logistics",      hcDesign:  35, hcExpected:  30, actualPresent:  26 },
-          { nombre: "Outbound / Delivery",  hcDesign:  23, hcExpected:  22, actualPresent:  18 },
-        ]
-      },
-      {
-        nombre: "Calidad",
-        hcDesign: AREA_DESIGN.calidad,
-        hcExpected: 90,
-        actualPresent: 80,
-        isCritical: false,
-        laborBuckets: ['gatekeepers', 'func_tests', 'pushouts', 'recovery', 'delivery'],
-        children: [
-          { nombre: "Gate Keepers",         hcDesign:  35, hcExpected:  32, actualPresent:  28 },
-          { nombre: "Functional Tests",     hcDesign:  30, hcExpected:  27, actualPresent:  24 },
-          { nombre: "Push Outs / Recovery", hcDesign:  20, hcExpected:  18, actualPresent:  16 },
-          { nombre: "Delivery & Touch Up",  hcDesign:  15, hcExpected:  13, actualPresent:  12 },
-        ]
-      },
-      {
-        nombre: "Mantenimiento",
-        hcDesign: AREA_DESIGN.mantenimiento,
-        hcExpected: 80,
-        actualPresent: 72,
-        isCritical: false,
-        laborBuckets: ['fixed'],
-      },
-      {
-        nombre: "Ingeniería Industrial y MFC",
-        hcDesign: AREA_DESIGN.ingenieria,
-        hcExpected: 60,
-        actualPresent: 55,
-        isCritical: false,
-        laborBuckets: ['fixed'],
-      },
-      {
-        nombre: "Soporte / Facilities / Dir.",
-        hcDesign: AREA_DESIGN.soporte,
-        hcExpected: 55,
-        actualPresent: 50,
-        isCritical: false,
-        laborBuckets: ['fixed'],
-      },
+    nombre: "Materials", hcDesign: 180, hcExpected: 180, isCritical: true, laborBuckets: ['online_short', 'offline_short', 'truck_log'],
+    children: [
+      { nombre: "KF Logistics", hcDesign: 49, hcExpected: 49, children: [
+        { nombre: "LEC I Logistics", hcDesign: 18, hcExpected: 18, children: [
+          { nombre: "Frame", hcDesign: 15, hcExpected: 15 },
+          { nombre: "Valves", hcDesign: 0, hcExpected: 0 },
+          { nombre: "Axle Set", hcDesign: 0, hcExpected: 0 },
+          { nombre: "Axle Trim", hcDesign: 3, hcExpected: 3 }
+        ]},
+        { nombre: "LEC II Logistics", hcDesign: 5, hcExpected: 5, children: [
+          { nombre: "Engines Set", hcDesign: 0, hcExpected: 0 },
+          { nombre: "Engines Trim", hcDesign: 0, hcExpected: 0 },
+          { nombre: "Tanks Installation", hcDesign: 3, hcExpected: 3 },
+          { nombre: "Cab Set", hcDesign: 1, hcExpected: 1 },
+          { nombre: "Hood Set", hcDesign: 1, hcExpected: 1 },
+          { nombre: "StartUp", hcDesign: 0, hcExpected: 0 }
+        ]},
+        { nombre: "LEM II Logistics", hcDesign: 26, hcExpected: 26, children: [
+          { nombre: "Cab Trim I", hcDesign: 0, hcExpected: 0 },
+          { nombre: "Cab Trim II", hcDesign: 19, hcExpected: 19 },
+          { nombre: "Sleeper Trim", hcDesign: 3, hcExpected: 3 },
+          { nombre: "Cab Trim 320 / LF", hcDesign: 4, hcExpected: 4 }
+        ]}
+      ]},
+      { nombre: "Assembly Materials", hcDesign: 91, hcExpected: 91 },
+      { nombre: "Fabrication Materials", hcDesign: 40, hcExpected: 40 }
+    ]
+  },
+  {
+    nombre: "Quality", hcDesign: 128, hcExpected: 128, isCritical: false, laborBuckets: ['gatekeepers', 'func_tests', 'recovery'],
+    children: [
+      { nombre: "Assembly Quality", hcDesign: 104, hcExpected: 104 },
+      { nombre: "Fabrication Quality", hcDesign: 24, hcExpected: 24 }
+    ]
+  },
+  {
+    nombre: "Maintenance & ME", hcDesign: 107, hcExpected: 107, isCritical: false, laborBuckets: ['fixed'],
+    children: [
+      { nombre: "Assembly Maint / ME", hcDesign: 67, hcExpected: 67 },
+      { nombre: "Fabrication Maint / ME", hcDesign: 40, hcExpected: 40 }
     ]
   }
 ];
 
-// ─────────────────────────────────────────────────────────────────
-// HISTORICAL DATA — Últimos 30 días (cobertura y HPT diarios)
-// ─────────────────────────────────────────────────────────────────
+const generateHierarchy = (multiplier) => {
+  const base = JSON.parse(JSON.stringify(buildBaseHierarchy()));
+  return base.map(area => computePresent(area, multiplier));
+};
+
+export const mockSnapshots = [
+  {
+    id: "2026-06-10-A",
+    fecha: "2026-06-10",
+    turno: "Shift A",
+    horario: "06:00 – 14:00",
+    hcContratado: HC_CONTRATADO,
+    hcExpectedTotal: HC_DESIGN_TOTAL,
+    otHabilitada: true,
+    areas: generateHierarchy(0.91)
+  },
+  {
+    id: "2026-06-10-B",
+    fecha: "2026-06-10",
+    turno: "Shift B",
+    horario: "14:00 – 22:00",
+    hcContratado: HC_CONTRATADO,
+    hcExpectedTotal: HC_DESIGN_TOTAL,
+    otHabilitada: false,
+    areas: generateHierarchy(0.96)
+  },
+  {
+    id: "2026-06-10-C",
+    fecha: "2026-06-10",
+    turno: "Shift C",
+    horario: "22:00 – 06:00",
+    hcContratado: HC_CONTRATADO,
+    hcExpectedTotal: HC_DESIGN_TOTAL,
+    otHabilitada: true,
+    areas: generateHierarchy(0.85)
+  }
+];
+
 export const historicalDays = [
   { fecha: "2026-05-12", label: "12/May", coberturaReal: 95.1, actualHpt: 244.1, riskScore:  5 },
   { fecha: "2026-05-13", label: "13/May", coberturaReal: 93.8, actualHpt: 248.9, riskScore: 14 },

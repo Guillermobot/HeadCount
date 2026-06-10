@@ -113,7 +113,7 @@ export default function HptImpactCenter() {
 
       if (contribution > 0.05) {
         bars.push({
-          name: area.nombre.replace(' / ', '/').replace('Ingeniería Industrial y MFC', 'Ing. Industrial'),
+          name: area.nombre,
           base: running,
           value: parseFloat(contribution.toFixed(2)),
           fill: area.status === 'danger' ? '#A80000' : area.status === 'warning' ? '#F1C40F' : '#107C41',
@@ -357,7 +357,7 @@ export default function HptImpactCenter() {
                   <div className="grid grid-cols-4 gap-2 items-center">
                     <div className="col-span-2 flex items-center gap-1.5 min-w-0">
                       <div className="h-2 w-2 rounded-sm flex-shrink-0" style={{ backgroundColor: fillColor }} />
-                      <span className="text-[10px] text-brand-text-primary truncate">{area.nombre.replace('Ingeniería Industrial y MFC', 'Ing. Industrial')}</span>
+                      <span className="text-[10px] text-brand-text-primary truncate">{area.nombre}</span>
                       {area.isCritical && <span className="text-[8px] text-red-400 flex-shrink-0">●</span>}
                     </div>
                     <div className="text-center">

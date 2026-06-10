@@ -289,7 +289,7 @@ function HptImpactHorizontalBar({ areas }) {
       const hptContrib = deficit > 0 ? parseFloat(((deficit * HOURS_PER_SHIFT * 1.2 * areaWeight) / 49).toFixed(2)) : 0;
       const barColor = area.status === 'danger' ? PBI.red : area.status === 'warning' ? PBI.orange : PBI.green;
       return {
-        name: area.nombre.replace('Ingeniería Industrial y MFC', 'Ing. Industrial').replace('Soporte / Facilities / Dir.', 'Soporte/Dir.'),
+        name: area.nombre,
         hptImpact: hptContrib,
         fill: barColor,
         coverage: area.hcExpected > 0 ? (area.actualPresent / area.hcExpected) * 100 : 0,
