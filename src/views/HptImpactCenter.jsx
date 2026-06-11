@@ -135,11 +135,10 @@ function MetricMini({ label, value, color }) {
 // ─────────────────────────────────────────────────────────────────
 // HierarchyRow — one expandable row for a rama / subArea
 // ─────────────────────────────────────────────────────────────────
-function HierarchyRow({ node, depth = 0, otEnabled, expandedSet, onToggle }) {
+function HierarchyRow({ node, depth = 0, otEnabled, expandedSet, onToggle, selectedNode, onSelect }) {
   const m = calcNodeMetrics(node, otEnabled);
   const covColor  = m.status === 'danger' ? 'text-red-400'    : m.status === 'warning' ? 'text-yellow-400' : 'text-emerald-400';
   const barColor  = m.status === 'danger' ? 'bg-red-600'      : m.status === 'warning' ? 'bg-yellow-400'   : 'bg-emerald-500';
-  const borderCol = m.status === 'danger' ? 'border-l-red-600': m.status === 'warning' ? 'border-l-yellow-400' : 'border-l-emerald-500';
 
   // Children to show when expanded — prefer subAreas, then grupos
   const children = node.subAreas?.length  ? node.subAreas
@@ -147,17 +146,28 @@ function HierarchyRow({ node, depth = 0, otEnabled, expandedSet, onToggle }) {
                  : [];
   const hasChildren = children.length > 0;
   const isExpanded  = expandedSet.has(node.id || node.nombre);
+  const isSelected  = selectedNode?.id === node.id && selectedNode?.nombre === node.nombre;
 
   const paddingLeft = depth === 0 ? 'pl-4' : depth === 1 ? 'pl-8' : 'pl-12';
+
+  const handleClick = () => {
+    // Always select — also toggle expand if has children
+    onSelect(node);
+    if (hasChildren) onToggle(node.id || node.nombre);
+  };
 
   return (
     <>
       <div
-        className={`border-b border-brand-border ${depth === 0 ? 'bg-brand-card' : depth === 1 ? 'bg-brand-bg' : 'bg-[#161616]'} hover:bg-brand-card/80 transition-colors`}
+        className={`border-b border-brand-border transition-colors ${
+          isSelected
+            ? 'bg-brand-accent/10 border-l-2 border-l-brand-accent'
+            : depth === 0 ? 'bg-brand-card' : depth === 1 ? 'bg-brand-bg' : 'bg-[#161616]'
+        } hover:bg-brand-card/80`}
       >
         <button
           className={`w-full flex items-center gap-3 py-3 ${paddingLeft} pr-4 text-left`}
-          onClick={() => hasChildren && onToggle(node.id || node.nombre)}
+          onClick={handleClick}
         >
           {/* Expand chevron */}
           <div className="flex-shrink-0 w-4">
@@ -221,6 +231,8 @@ function HierarchyRow({ node, depth = 0, otEnabled, expandedSet, onToggle }) {
           otEnabled={otEnabled}
           expandedSet={expandedSet}
           onToggle={onToggle}
+          selectedNode={selectedNode}
+          onSelect={onSelect}
         />
       ))}
     </>
@@ -241,14 +253,33 @@ export default function HptImpactCenter() {
 
   // Drill-down state
   const [expandedSet, setExpandedSet] = useState(new Set(['assembly', 'fabrication']));
+  const [selectedNode, setSelectedNode] = useState(null);
+
   const toggleNode = (key) => setExpandedSet(prev => {
     const next = new Set(prev);
     next.has(key) ? next.delete(key) : next.add(key);
     return next;
   });
 
+  const handleSelect = (node) => {
+    setSelectedNode(prev =>
+      prev?.id === node.id && prev?.nombre === node.nombre ? null : node
+    );
+  };
+
   // Top-level ramas for the drill-down panel
   const ramas = metrics.ramasEnriched || [];
+
+  // ── Waterfall source: children of selected node, or top-level ramas ──
+  const waterfallSource = (() => {
+    if (!selectedNode) return ramas;
+    const children = selectedNode.subAreas?.length ? selectedNode.subAreas
+                   : selectedNode.grupos?.length   ? selectedNode.grupos
+                   : [];
+    return children.length > 0 ? children : [selectedNode];
+  })();
+
+  const waterfallLabel = selectedNode ? selectedNode.nombre : 'All Areas';
 
   // ── Waterfall data ──
   const waterfallData = (() => {
@@ -257,15 +288,21 @@ export default function HptImpactCenter() {
 
     bars.push({ name: 'HPT Obj.', base: 0, value: HPT_OBJECTIVE, fill: '#118DFF', isStart: true });
 
-    ramas.forEach((rama) => {
-      const m = calcNodeMetrics(rama, otEnabled);
-      if (m.hptImpact > 0.05) {
+    waterfallSource.forEach((node) => {
+      const m = calcNodeMetrics(node, otEnabled);
+      if (m.hptImpact > 0.01) {
+        const shortName = node.nombre
+          .replace('ASSEMBLY w/ KF LOGS', 'w/ KF LOGS')
+          .replace('ASSEMBLY INDIRECT', 'Indirect')
+          .replace('FABRICATION', 'Fabrication')
+          .replace('FABRICATION DIRECT', 'FAB Direct')
+          .replace('FABRICATION INDIRECT', 'FAB Indirect');
         bars.push({
-          name: rama.nombre.replace('ASSEMBLY w/ KF LOGS', 'w/ KF LOGS').replace('ASSEMBLY INDIRECT', 'Indirect').replace('FABRICATION', 'Fabrication'),
+          name: shortName,
           base: running,
           value: parseFloat(m.hptImpact.toFixed(2)),
           fill: m.status === 'danger' ? '#A80000' : m.status === 'warning' ? '#F1C40F' : '#107C41',
-          isCritical: rama.isCritical,
+          isCritical: node.isCritical,
         });
         running += m.hptImpact;
       }
@@ -364,11 +401,23 @@ export default function HptImpactCenter() {
           <div className="flex items-center justify-between px-5 py-3.5 border-b border-brand-border flex-wrap gap-2">
             <div>
               <h3 className="text-xs font-bold uppercase tracking-widest text-brand-text-secondary">
-                HPT Impact Waterfall by Area
+                HPT Impact Waterfall
               </h3>
-              <p className="text-[10px] text-brand-text-muted mt-0.5">
-                How each area's attendance gap adds hours to the {HPT_OBJECTIVE} hrs HPT target
-              </p>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <p className="text-[10px] text-brand-text-muted">
+                  {selectedNode
+                    ? <><span className="text-brand-text-muted">All Areas</span><span className="text-brand-text-muted mx-1">›</span><span className="text-brand-accent font-semibold">{selectedNode.nombre}</span> — sub-area breakdown</>
+                    : <>Attendance gap contribution per area — {HPT_OBJECTIVE} hrs target</>}
+                </p>
+                {selectedNode && (
+                  <button
+                    onClick={() => setSelectedNode(null)}
+                    className="text-[9px] text-brand-text-muted hover:text-brand-text-primary underline ml-1 flex-shrink-0"
+                  >
+                    Reset
+                  </button>
+                )}
+              </div>
             </div>
             {!otEnabled && (
               <div className="flex items-center gap-1.5 text-[10px] text-yellow-400 bg-yellow-900/10 border border-yellow-700/30 px-2.5 py-1 rounded">
@@ -470,7 +519,7 @@ export default function HptImpactCenter() {
                 Area Drill-Down
               </h3>
               <p className="text-[10px] text-brand-text-muted mt-0.5">
-                Click any area to expand sub-areas — {filters?.turno ?? 'All shifts'}
+                Click any row to drill waterfall chart — {filters?.turno ?? 'All shifts'}
               </p>
             </div>
             {/* Column legend */}
@@ -502,6 +551,8 @@ export default function HptImpactCenter() {
                 otEnabled={otEnabled}
                 expandedSet={expandedSet}
                 onToggle={toggleNode}
+                selectedNode={selectedNode}
+                onSelect={handleSelect}
               />
             ))}
           </div>
