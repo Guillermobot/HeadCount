@@ -201,7 +201,7 @@ export default function CoverageDashboard() {
   const covered     = metrics.totalPresent;
   const expected    = metrics.totalExpected;
   const cov         = expected > 0 ? (covered / expected) * 100 : 0;
-  const covStatus   = cov < 88 ? 'danger' : cov < 93 ? 'warning' : 'success';
+  const covStatus   = cov < 85 ? 'danger' : cov < 91 ? 'warning' : 'success';
   const covCfg      = STATUS[covStatus];
 
   return (

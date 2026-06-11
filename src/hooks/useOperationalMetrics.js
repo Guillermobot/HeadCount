@@ -1,13 +1,8 @@
 import { HC_DESIGN_TOTAL, HPT_OBJECTIVE, HOURS_PER_SHIFT, OT_INEFFICIENCY_FACTOR } from '../data/constants';
 
 function calcStatus(coverage, isCritical) {
-  if (isCritical) {
-    if (coverage < 90) return 'danger';
-    if (coverage < 95) return 'warning';
-    return 'success';
-  }
   if (coverage < 85) return 'danger';
-  if (coverage < 90) return 'warning';
+  if (coverage < 91) return 'warning';
   return 'success';
 }
 
@@ -46,7 +41,7 @@ export const useOperationalMetrics = (snapshot) => {
       hptActual: HPT_OBJECTIVE,
       hptDiferencia: 0,
       riesgoScore: 0,
-      riesgoNivel: "Bajo",
+      riesgoNivel: "Low",
       totalDesign: HC_DESIGN_TOTAL,
       totalExpected: 0,
       totalPresent: 0,
@@ -91,7 +86,7 @@ export const useOperationalMetrics = (snapshot) => {
     hptActual,
     hptDiferencia: ((hptActual - HPT_OBJECTIVE) / HPT_OBJECTIVE) * 100,
     riesgoScore: Math.min(100, Math.round(riesgoScore)),
-    riesgoNivel: riesgoScore >= 70 ? "Crítico" : riesgoScore >= 45 ? "Alto" : "Bajo",
+    riesgoNivel: riesgoScore >= 70 ? "Critical" : riesgoScore >= 45 ? "High" : "Low",
     totalDesign, 
     totalExpected, 
     totalPresent,

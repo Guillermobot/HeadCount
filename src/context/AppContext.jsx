@@ -16,6 +16,20 @@ export const AppProvider = ({ children }) => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [filterPaneOpen, setFilterPaneOpen] = useState(true);
 
+  // Theme state — dark by default
+  const [isDarkMode, setIsDarkMode] = useState(true);
+
+  // Apply theme class to <html>
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.remove('light');
+    } else {
+      document.documentElement.classList.add('light');
+    }
+  }, [isDarkMode]);
+
+  const toggleTheme = () => setIsDarkMode(prev => !prev);
+
   // Active snapshot from mock data based on filters
   const [activeSnapshot, setActiveSnapshot] = useState(null);
   
@@ -127,7 +141,9 @@ export const AppProvider = ({ children }) => {
         startSimulation,
         updateSimulatedOt,
         updateSimulatedAttendance,
-        resetSimulation
+        resetSimulation,
+        isDarkMode,
+        toggleTheme
       }}
     >
       {children}

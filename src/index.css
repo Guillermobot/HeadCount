@@ -2,32 +2,145 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Dark theme (default) ── */
+:root {
+  --color-bg:           #111111;
+  --color-card:         #1D1D1D;
+  --color-sidebar:      #161616;
+  --color-border:       #2D2D2D;
+  --color-accent:       #118DFF;
+  --color-success:      #107C41;
+  --color-warning:      #F1C40F;
+  --color-danger:       #A80000;
+  --color-text-primary: #F3F2F1;
+  --color-text-secondary: #A19F9D;
+  --color-text-muted:   #605E5C;
+
+  /* Scrollbar */
+  --scrollbar-track:    #161616;
+  --scrollbar-thumb:    #2D2D2D;
+  --scrollbar-hover:    #3E3E3E;
+}
+
+/* ── Light theme (Power BI-inspired) ── */
+html.light {
+  --color-bg:           #F5F5F5;
+  --color-card:         #FFFFFF;
+  --color-sidebar:      #FAFAFA;
+  --color-border:       #DCDCDC;
+  --color-accent:       #0078D4;
+  --color-success:      #107C41;
+  --color-warning:      #CC8A00;
+  --color-danger:       #A80000;
+  --color-text-primary: #252423;
+  --color-text-secondary: #605E5C;
+  --color-text-muted:   #A19F9D;
+
+  /* Scrollbar */
+  --scrollbar-track:    #F0F0F0;
+  --scrollbar-thumb:    #DCDCDC;
+  --scrollbar-hover:    #C0C0C0;
+}
+
 html, body, #root {
-  background-color: #111111;
-  color: #F3F2F1;
+  background-color: var(--color-bg);
+  color: var(--color-text-primary);
   font-family: "Segoe UI", system-ui, sans-serif;
   margin: 0;
   padding: 0;
   width: 100%;
   height: 100%;
   overflow: hidden;
+  transition: background-color 0.25s ease, color 0.25s ease;
 }
 
-/* Custom scrollbar to match Power BI dark style */
+/* ── Scrollbar ── */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #161616;
+  background: var(--scrollbar-track);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #2D2D2D;
+  background: var(--scrollbar-thumb);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #3E3E3E;
+  background: var(--scrollbar-hover);
+}
+
+/* ── Override Tailwind brand-* tokens to respect CSS vars ── */
+.bg-brand-bg       { background-color: var(--color-bg) !important; }
+.bg-brand-card     { background-color: var(--color-card) !important; }
+.bg-brand-sidebar  { background-color: var(--color-sidebar) !important; }
+.border-brand-border { border-color: var(--color-border) !important; }
+.bg-brand-border   { background-color: var(--color-border) !important; }
+
+.text-brand-accent        { color: var(--color-accent) !important; }
+.text-brand-success       { color: var(--color-success) !important; }
+.text-brand-warning       { color: var(--color-warning) !important; }
+.text-brand-danger        { color: var(--color-danger) !important; }
+.text-brand-text-primary  { color: var(--color-text-primary) !important; }
+.text-brand-text-secondary{ color: var(--color-text-secondary) !important; }
+.text-brand-text-muted    { color: var(--color-text-muted) !important; }
+
+.bg-brand-accent   { background-color: var(--color-accent) !important; }
+.bg-brand-success  { background-color: var(--color-success) !important; }
+.bg-brand-warning  { background-color: var(--color-warning) !important; }
+.bg-brand-danger   { background-color: var(--color-danger) !important; }
+
+/* Opacity utilities that use brand vars */
+.bg-brand-accent\/10  { background-color: color-mix(in srgb, var(--color-accent) 10%, transparent) !important; }
+.bg-brand-accent\/20  { background-color: color-mix(in srgb, var(--color-accent) 20%, transparent) !important; }
+.border-brand-accent  { border-color: var(--color-accent) !important; }
+
+/* Light-mode specific adjustments for components using hardcoded dark values */
+html.light .bg-\[\#1D1D1D\],
+html.light .bg-\[\#161616\] {
+  background-color: var(--color-card) !important;
+}
+
+html.light .bg-black\/10,
+html.light .bg-black\/20,
+html.light .bg-black\/30 {
+  background-color: rgba(0,0,0,0.03) !important;
+}
+
+html.light .text-\[\#A19F9D\] {
+  color: var(--color-text-secondary) !important;
+}
+
+html.light .text-\[\#F3F2F1\] {
+  color: var(--color-text-primary) !important;
+}
+
+html.light .border-\[\#2D2D2D\] {
+  border-color: var(--color-border) !important;
+}
+
+html.light .bg-brand-bg\/40 {
+  background-color: color-mix(in srgb, var(--color-bg) 40%, transparent) !important;
+}
+
+html.light .bg-brand-card\/50,
+html.light .bg-brand-card\/60,
+html.light .bg-brand-card\/80 {
+  background-color: var(--color-card) !important;
+}
+
+html.light .bg-brand-bg\/20 {
+  background-color: rgba(0, 0, 0, 0.03) !important;
+}
+
+html.light .shadow-2xl {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12) !important;
+}
+
+/* Smooth transitions on all themed elements */
+*, *::before, *::after {
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.15s ease;
 }

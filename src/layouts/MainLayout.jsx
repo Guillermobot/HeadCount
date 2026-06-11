@@ -15,9 +15,12 @@ import {
   AlertTriangle,
   FileSpreadsheet,
   HelpCircle,
-  Play
+  Play,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { UPD_TARGET, HC_DESIGN_TOTAL, HPT_OBJECTIVE } from '../data/constants';
+import kenworthLogo from '../assets/kenworth_logo.png';
 
 export const MainLayout = ({ children }) => {
   const {
@@ -33,24 +36,26 @@ export const MainLayout = ({ children }) => {
     isSimulating,
     resetSimulation,
     startSimulation,
-    updateSimulatedOt
+    updateSimulatedOt,
+    isDarkMode,
+    toggleTheme
   } = useApp();
 
   const metrics = useOperationalMetrics(displaySnapshot);
 
   const viewTitles = {
-    'executive': 'Control Ejecutivo de Capacidad',
-    'coverage': 'Monitoreo de Cobertura por Área',
+    'executive': 'Executive Capacity Control',
+    'coverage': 'Area Coverage Monitoring',
     'hpt-center': 'HPT Impact Center',
-    'hr': 'Gestión e Indicadores de HC (HR)',
+    'hr': 'HC Management & Indicators (HR)',
     'risk-center': 'Operational Risk Center'
   };
 
   const navItems = [
-    { id: 'executive', name: 'Control Ejecutivo', icon: LayoutDashboard },
-    { id: 'coverage', name: 'Cobertura por Área', icon: Layers },
+    { id: 'executive', name: 'Executive Control', icon: LayoutDashboard },
+    { id: 'coverage', name: 'Area Coverage', icon: Layers },
     { id: 'hpt-center', name: 'HPT Impact Center', icon: TrendingUp },
-    { id: 'hr', name: 'Gestión de HC (HR)', icon: Users },
+    { id: 'hr', name: 'HC Management (HR)', icon: Users },
     { id: 'risk-center', name: 'Risk Center', icon: ShieldAlert },
   ];
 
@@ -63,22 +68,52 @@ export const MainLayout = ({ children }) => {
           sidebarCollapsed ? 'w-16' : 'w-64'
         }`}
       >
+        {/* Theme Toggle Button — above logo */}
+        <button
+          onClick={toggleTheme}
+          title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          className={`flex items-center gap-2 px-4 py-2.5 border-b border-brand-border transition-all group ${
+            isDarkMode
+              ? 'bg-black/30 hover:bg-black/50'
+              : 'bg-white/60 hover:bg-white/90'
+          }`}
+        >
+          <div className={`relative flex items-center justify-center h-7 w-7 rounded-full flex-shrink-0 transition-all ${
+            isDarkMode
+              ? 'bg-brand-accent/20 text-brand-accent'
+              : 'bg-yellow-400/20 text-yellow-600'
+          }`}>
+            {isDarkMode
+              ? <Moon size={14} className="text-brand-accent" />
+              : <Sun size={14} className="text-yellow-500" />
+            }
+          </div>
+          {!sidebarCollapsed && (
+            <div className="flex flex-col items-start">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-brand-text-muted leading-none">
+                Theme
+              </span>
+              <span className="text-xs font-semibold text-brand-text-secondary mt-0.5">
+                {isDarkMode ? 'Dark Mode' : 'Light Mode'}
+              </span>
+            </div>
+          )}
+        </button>
+
         {/* Sidebar Header */}
         <div className="h-12 flex items-center justify-between px-4 border-b border-brand-border bg-black/20">
           {!sidebarCollapsed && (
             <div className="flex items-center gap-2">
-              <div className="h-6 w-6 rounded bg-brand-accent flex items-center justify-center text-xs font-bold text-white">
-                MC
-              </div>
+              <img src={kenworthLogo} alt="Kenworth Logo" className="h-7 w-auto object-contain" />
               <span className="font-semibold text-sm tracking-wide text-brand-text-primary">
-                Capacity Suite
+                Real Time Headcount
               </span>
             </div>
           )}
           <button 
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
             className="p-1 rounded hover:bg-brand-card text-brand-text-secondary hover:text-brand-text-primary ml-auto"
-            title={sidebarCollapsed ? "Expandir Menú" : "Colapsar Menú"}
+            title={sidebarCollapsed ? "Expand Menu" : "Collapse Menu"}
           >
             <Menu size={18} />
           </button>
@@ -87,10 +122,10 @@ export const MainLayout = ({ children }) => {
         {/* Workspace selector (Power BI Style) */}
         {!sidebarCollapsed && (
           <div className="px-4 py-3 border-b border-brand-border bg-black/10">
-            <div className="text-[10px] uppercase font-bold text-brand-text-muted">Área de Trabajo</div>
+            <div className="text-[10px] uppercase font-bold text-brand-text-muted">Workspace</div>
             <div className="text-xs font-medium text-brand-text-secondary truncate mt-1 flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-brand-success"></span>
-              Planta de Manufactura 49
+              Manufacturing Plant 49
             </div>
           </div>
         )}
@@ -129,7 +164,7 @@ export const MainLayout = ({ children }) => {
           ) : (
             <>
               <div className="text-[10px] uppercase font-bold text-brand-text-muted tracking-wider">
-                Referencias Maestras (Fijas)
+                Master References (Fixed)
               </div>
               <div className="space-y-2">
                 <div className="flex justify-between items-center bg-brand-bg/40 px-2 py-1.5 rounded border border-brand-border/40">
@@ -137,11 +172,11 @@ export const MainLayout = ({ children }) => {
                   <span className="font-semibold text-brand-accent">{UPD_TARGET.toFixed(1)}</span>
                 </div>
                 <div className="flex justify-between items-center bg-brand-bg/40 px-2 py-1.5 rounded border border-brand-border/40">
-                  <span className="text-brand-text-secondary">HC Diseño:</span>
+                  <span className="text-brand-text-secondary">Design HC:</span>
                   <span className="font-semibold text-brand-text-primary">{HC_DESIGN_TOTAL}</span>
                 </div>
                 <div className="flex justify-between items-center bg-brand-bg/40 px-2 py-1.5 rounded border border-brand-border/40">
-                  <span className="text-brand-text-secondary">HPT Objetivo:</span>
+                  <span className="text-brand-text-secondary">Target HPT:</span>
                   <span className="font-semibold text-yellow-500">{HPT_OBJECTIVE.toFixed(1)}</span>
                 </div>
               </div>
@@ -156,7 +191,7 @@ export const MainLayout = ({ children }) => {
         {/* 3. HEADER DE LA APLICACIÓN (Top Navigation Bar) */}
         <header className="h-12 bg-brand-sidebar border-b border-brand-border flex items-center justify-between px-6 z-10">
           <div className="flex items-center gap-3">
-            <span className="text-xs text-brand-text-muted">Home &gt; Planta 49 &gt;</span>
+            <span className="text-xs text-brand-text-muted">Home &gt; Plant 49 &gt;</span>
             <h1 className="text-sm font-semibold tracking-wide text-brand-text-primary">
               {viewTitles[activeView]}
             </h1>
@@ -167,11 +202,11 @@ export const MainLayout = ({ children }) => {
             {isSimulating && (
               <div className="flex items-center gap-2 bg-brand-warning/10 border border-brand-warning/30 px-3 py-1 rounded text-xs text-brand-warning animate-pulse">
                 <span className="h-2 w-2 rounded-full bg-brand-warning animate-ping"></span>
-                <span>Modo Simulación Activo</span>
+                <span>Simulation Mode Active</span>
                 <button 
                   onClick={resetSimulation}
                   className="ml-1 p-0.5 rounded hover:bg-brand-warning/20 text-brand-warning"
-                  title="Restablecer Datos Reales"
+                  title="Reset to Real Data"
                 >
                   <RotateCcw size={12} />
                 </button>
@@ -181,13 +216,13 @@ export const MainLayout = ({ children }) => {
             {/* Quick Metrics Summary */}
             <div className="hidden md:flex items-center gap-4 text-xs border-r border-brand-border pr-4">
               <div className="flex items-center gap-1.5">
-                <span className="text-brand-text-secondary">HC Esperado Turno:</span>
+                <span className="text-brand-text-secondary">Expected Shift HC:</span>
                 <span className="font-semibold text-brand-text-primary">{metrics.totalExpected}</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="text-brand-text-secondary">Asistencia Real:</span>
+                <span className="text-brand-text-secondary">Actual Attendance:</span>
                 <span className={`font-semibold ${
-                  metrics.coberturaGeneral < 90 ? 'text-brand-danger' : metrics.coberturaGeneral < 95 ? 'text-brand-warning' : 'text-brand-success'
+                  metrics.coberturaGeneral < 85 ? 'text-brand-danger' : metrics.coberturaGeneral < 91 ? 'text-brand-warning' : 'text-brand-success'
                 }`}>
                   {metrics.totalPresent} ({metrics.coberturaGeneral.toFixed(1)}%)
                 </span>
@@ -196,7 +231,7 @@ export const MainLayout = ({ children }) => {
 
             {/* Actions & Last Refresh */}
             <span className="text-[10px] text-brand-text-muted hidden lg:inline">
-              Refresco: Hoy {filters.turno === 'Turno A' ? '06:00' : filters.turno === 'Turno B' ? '14:00' : '22:00'} AM
+              Refreshed: Today {filters.turno === 'Turno A' ? '06:00' : filters.turno === 'Turno B' ? '14:00' : '22:00'} AM
             </span>
 
             <button 
@@ -204,7 +239,7 @@ export const MainLayout = ({ children }) => {
               className={`p-1.5 rounded hover:bg-brand-card transition-colors ${
                 filterPaneOpen ? 'text-brand-accent bg-brand-card' : 'text-brand-text-secondary'
               }`}
-              title="Panel de Filtros (Slicers)"
+              title="Filter Panel (Slicers)"
             >
               <Filter size={18} />
             </button>
@@ -229,7 +264,7 @@ export const MainLayout = ({ children }) => {
             <div className="h-10 flex items-center justify-between px-4 border-b border-brand-border bg-black/10">
               <span className="text-xs font-bold text-brand-text-secondary uppercase tracking-wider flex items-center gap-1.5">
                 <Filter size={12} />
-                Filtros (Slicers)
+                Filters (Slicers)
               </span>
             </div>
 
@@ -239,14 +274,14 @@ export const MainLayout = ({ children }) => {
               <div className="space-y-2">
                 <label className="text-[10px] font-bold text-brand-text-muted uppercase tracking-wider flex items-center gap-1">
                   <Calendar size={12} />
-                  Fecha de Operación
+                  Operating Date
                 </label>
                 <select 
                   value={filters.fecha} 
                   onChange={(e) => setFilter('fecha', e.target.value)}
                   className="w-full bg-brand-card border border-brand-border rounded px-2.5 py-1.5 text-brand-text-primary focus:outline-none focus:border-brand-accent cursor-pointer"
                 >
-                  <option value="2026-06-10">10 Jun 2026 (Hoy)</option>
+                  <option value="2026-06-10">Jun 10, 2026 (Today)</option>
                 </select>
               </div>
 
@@ -254,7 +289,7 @@ export const MainLayout = ({ children }) => {
               <div className="space-y-2">
                 <label className="text-[10px] font-bold text-brand-text-muted uppercase tracking-wider flex items-center gap-1">
                   <Clock size={12} />
-                  Turno Activo
+                  Active Shift
                 </label>
                 <div className="space-y-1">
                   {/* AQUÍ SE AGREGÓ EL TURNO TOTAL AL ARREGLO */}
@@ -268,8 +303,7 @@ export const MainLayout = ({ children }) => {
                           : 'bg-brand-card border-brand-border text-brand-text-secondary hover:border-brand-text-muted'
                       }`}
                     >
-                      {/* Personalizamos la etiqueta para que "Total" se vea más descriptivo */}
-                      {turno === 'Total' ? 'Planta Total (24 Hrs)' : turno}
+                      {turno === 'Total' ? 'Total Plant (24 Hrs)' : turno === 'Turno A' ? 'Shift A' : turno === 'Turno B' ? 'Shift B' : 'Shift C'}
                     </button>
                   ))}
                 </div>
@@ -284,28 +318,28 @@ export const MainLayout = ({ children }) => {
                     onChange={(e) => setFilter('soloCriticas', e.target.checked)}
                     className="rounded bg-brand-card border-brand-border text-brand-accent focus:ring-0 cursor-pointer"
                   />
-                  <span>Ver solo Áreas Críticas</span>
+                  <span>Show Critical Areas Only</span>
                 </label>
               </div>
 
               {/* Quick Actions Panel */}
               <div className="pt-6 border-t border-brand-border space-y-3">
                 <div className="text-[10px] font-bold text-brand-text-muted uppercase tracking-wider">
-                  Acciones Rápidas
+                  Quick Actions
                 </div>
                 <button 
-                  onClick={() => alert("Reporte exportado a Excel (simulado)")}
+                  onClick={() => alert("Report exported to Excel (simulated)")}
                   className="w-full flex items-center justify-center gap-2 bg-brand-card hover:bg-brand-card/80 border border-brand-border text-brand-text-secondary hover:text-brand-text-primary py-2 rounded font-medium transition-colors"
                 >
                   <FileSpreadsheet size={14} className="text-brand-success" />
-                  <span>Exportar Datos (XLSX)</span>
+                  <span>Export Data (XLSX)</span>
                 </button>
                 <button 
-                  onClick={() => alert("Información de estándares de planta:\n49 UPD de diseño\n1498 empleados asignados\nTurno A: 06:00 - 14:00\nTurno B: 14:00 - 22:00\nTurno C: 22:00 - 06:00")}
+                  onClick={() => alert("Plant standards info:\n49 design UPD\n1,498 assigned employees\nShift A: 06:00 - 14:00\nShift B: 14:00 - 22:00\nShift C: 22:00 - 06:00")}
                   className="w-full flex items-center justify-center gap-2 bg-brand-card hover:bg-brand-card/80 border border-brand-border text-brand-text-secondary hover:text-brand-text-primary py-2 rounded font-medium transition-colors"
                 >
                   <HelpCircle size={14} />
-                  <span>Estándares de Planta</span>
+                  <span>Plant Standards</span>
                 </button>
               </div>
 

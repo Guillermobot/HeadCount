@@ -97,7 +97,7 @@ function calcNodeMetrics(node, otEnabled) {
 
   const status =
     opCapacity < 85 ? 'danger' :
-    opCapacity < 92 ? 'warning' : 'success';
+    opCapacity < 91 ? 'warning' : 'success';
 
   return { attendance, opCapacity, hptImpact, deficit, status };
 }
@@ -211,7 +211,7 @@ function HierarchyRow({ node, depth = 0, otEnabled, expandedSet, onToggle, selec
             <MetricMini
               label="Attendance"
               value={`${m.attendance.toFixed(1)}%`}
-              color={m.attendance < 88 ? 'text-red-400' : m.attendance < 93 ? 'text-yellow-400' : 'text-emerald-400'}
+              color={m.attendance < 85 ? 'text-red-400' : m.attendance < 91 ? 'text-yellow-400' : 'text-emerald-400'}
             />
             <MetricMini
               label="Op. Capacity"
@@ -295,7 +295,7 @@ export default function HptImpactCenter() {
     const design  = node.hcDesign  || 0;
     const present = node.actualPresent || 0;
     const opCap   = design > 0 ? (present / design) * 100 : 100;
-    const status  = opCap < 85 ? 'danger' : opCap < 92 ? 'warning' : 'success';
+    const status  = opCap < 85 ? 'danger' : opCap < 91 ? 'warning' : 'success';
     const shortName = node.nombre
       .replace('ASSEMBLY w/ KF LOGS', 'Asm w/KF')
       .replace('ASSEMBLY INDIRECT', 'Asm Indirect')
@@ -387,7 +387,7 @@ export default function HptImpactCenter() {
                 Area Drill-Down
               </h3>
               <p className="text-[10px] text-brand-text-muted mt-0.5">
-                Click any row to drill waterfall chart — {filters?.turno ?? 'All shifts'}
+                Click any row to drill waterfall chart — {filters?.turno === 'Total' ? 'Total Plant' : filters?.turno === 'Turno A' ? 'Shift A' : filters?.turno === 'Turno B' ? 'Shift B' : filters?.turno === 'Turno C' ? 'Shift C' : 'All shifts'}
               </p>
             </div>
             {/* Column legend */}

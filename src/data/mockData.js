@@ -3,31 +3,31 @@ import { HC_DESIGN_TOTAL } from './constants';
 export const HC_CONTRATADO = 1504; 
 
 export const laborBuckets = [
-  { id: 'fixed', label: 'Fixed Crews', descripcion: 'Plantillas fijas' },
-  { id: 'temporary', label: 'Temporary Crews', descripcion: 'Flexibilidad' },
-  { id: 'outbound', label: 'Outbound', descripcion: 'Salida de producto' },
-  { id: 'gatekeepers', label: 'Gate Keepers', descripcion: 'Filtros de calidad' },
-  { id: 'cng', label: 'CNG', descripcion: 'Gas Natural' },
-  { id: 'export', label: 'Export', descripcion: 'Exportación' },
-  { id: 'online_short', label: 'Online Shortages', descripcion: 'Faltantes en línea' },
-  { id: 'offline_short', label: 'Offline Shortages', descripcion: 'Faltantes fuera' },
-  { id: 'pushouts', label: 'Push Outs', descripcion: 'Retrabajo mayor' },
-  { id: 'recovery', label: 'Recovery', descripcion: 'Recuperación' },
-  { id: 'func_tests', label: 'Functional Tests', descripcion: 'Pruebas funcionales' },
-  { id: 'delivery', label: 'Delivery / Touch Up', descripcion: 'Retoques' },
-  { id: 'truck_log', label: 'Truck Logistics', descripcion: 'Movimientos en patio' },
+  { id: 'fixed', label: 'Fixed Crews', descripcion: 'Fixed Crews' },
+  { id: 'temporary', label: 'Temporary Crews', descripcion: 'Flexibility' },
+  { id: 'outbound', label: 'Outbound', descripcion: 'Product Output' },
+  { id: 'gatekeepers', label: 'Gate Keepers', descripcion: 'Quality Gates' },
+  { id: 'cng', label: 'CNG', descripcion: 'Natural Gas' },
+  { id: 'export', label: 'Export', descripcion: 'Export' },
+  { id: 'online_short', label: 'Online Shortages', descripcion: 'Online Shortages' },
+  { id: 'offline_short', label: 'Offline Shortages', descripcion: 'Offline Shortages' },
+  { id: 'pushouts', label: 'Push Outs', descripcion: 'Major Rework' },
+  { id: 'recovery', label: 'Recovery', descripcion: 'Recovery' },
+  { id: 'func_tests', label: 'Functional Tests', descripcion: 'Functional Tests' },
+  { id: 'delivery', label: 'Delivery / Touch Up', descripcion: 'Touch Up' },
+  { id: 'truck_log', label: 'Truck Logistics', descripcion: 'Yard Movements' },
 ];
 
 const LEGACY_AREAS = [
-  { nombre: "Línea de Ensamble", hcDesign: 380, hcExpected: 380, actualPresent: 0, isCritical: true, children: [] },
-  { nombre: "Ensambles Mayores", hcDesign: 250, hcExpected: 250, actualPresent: 0, isCritical: true, children: [] },
+  { nombre: "Assembly Line", hcDesign: 380, hcExpected: 380, actualPresent: 0, isCritical: true, children: [] },
+  { nombre: "Major Assemblies", hcDesign: 250, hcExpected: 250, actualPresent: 0, isCritical: true, children: [] },
   { nombre: "Kenfab", hcDesign: 280, hcExpected: 280, actualPresent: 0, isCritical: true, children: [] },
-  { nombre: "Plásticos", hcDesign: 90, hcExpected: 90, actualPresent: 0, isCritical: false, children: [] },
-  { nombre: "Materiales / Logística", hcDesign: 168, hcExpected: 168, actualPresent: 0, isCritical: true, children: [] },
-  { nombre: "Calidad", hcDesign: 100, hcExpected: 100, actualPresent: 0, isCritical: false, children: [] },
-  { nombre: "Mantenimiento", hcDesign: 90, hcExpected: 90, actualPresent: 0, isCritical: false, children: [] },
-  { nombre: "Ingeniería Industrial y MFC", hcDesign: 70, hcExpected: 70, actualPresent: 0, isCritical: false, children: [] },
-  { nombre: "Soporte / Facilities / Dir.", hcDesign: 70, hcExpected: 70, actualPresent: 0, isCritical: false, children: [] },
+  { nombre: "Plastics", hcDesign: 90, hcExpected: 90, actualPresent: 0, isCritical: false, children: [] },
+  { nombre: "Materials / Logistics", hcDesign: 168, hcExpected: 168, actualPresent: 0, isCritical: true, children: [] },
+  { nombre: "Quality", hcDesign: 100, hcExpected: 100, actualPresent: 0, isCritical: false, children: [] },
+  { nombre: "Maintenance", hcDesign: 90, hcExpected: 90, actualPresent: 0, isCritical: false, children: [] },
+  { nombre: "Industrial Engineering & MFC", hcDesign: 70, hcExpected: 70, actualPresent: 0, isCritical: false, children: [] },
+  { nombre: "Support / Facilities / Dir.", hcDesign: 70, hcExpected: 70, actualPresent: 0, isCritical: false, children: [] },
 ];
 
 const RAMAS_TEMPLATE = [
@@ -97,11 +97,11 @@ const RAMAS_TEMPLATE = [
           {
             id: 'test_tu', nombre: '+ TEST / TOUCH UP', hcDesign: 153, hcExpected: 153, actualPresent: 0, isCritical: false,
             estaciones: [
-              { nombre: '- Pruebas Funcionales', hcDesign: 30, hcExpected: 30, actualPresent: 0, children: [] },
+              { nombre: '- Functional Tests', hcDesign: 30, hcExpected: 30, actualPresent: 0, children: [] },
               { nombre: '- Recovery', hcDesign: 13, hcExpected: 13, actualPresent: 0, children: [] },
               { nombre: '- Complex Defects (Depes)', hcDesign: 7, hcExpected: 7, actualPresent: 0, children: [] },
-              { nombre: '- Delivery (Carpa Chica)', hcDesign: 4, hcExpected: 4, actualPresent: 0, children: [] },
-              { nombre: '- Delivery (Carpa Grande)', hcDesign: 65, hcExpected: 65, actualPresent: 0, children: [] },
+              { nombre: '- Delivery (Small Tent)', hcDesign: 4, hcExpected: 4, actualPresent: 0, children: [] },
+              { nombre: '- Delivery (Large Tent)', hcDesign: 65, hcExpected: 65, actualPresent: 0, children: [] },
               { nombre: '- Logistics & Buffers', hcDesign: 12, hcExpected: 12, actualPresent: 0, children: [] },
               { nombre: '- Touch Up', hcDesign: 22, hcExpected: 22, actualPresent: 0, children: [] },
             ]
@@ -242,7 +242,7 @@ const expectedC = areasC.reduce((sum, a) => sum + a.hcExpected, 0);
 
 export const mockSnapshots = [
   {
-    id: '2026-06-10-Total', fecha: '2026-06-10', turno: 'Total', horario: 'Consolidado 24 Hrs',
+    id: '2026-06-10-Total', fecha: '2026-06-10', turno: 'Total', horario: 'Consolidated 24 Hrs',
     hcContratado: HC_CONTRATADO, 
     hcExpectedTotal: expectedTotal, // Apuntará a 1498
     otHabilitada: true,

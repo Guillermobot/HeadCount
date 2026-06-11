@@ -87,17 +87,12 @@ function StatusBadge({ status, label }) {
 
 /** Coverage colour logic (shared between heatmap and risk table) */
 function getCoverageStatus(coverage, isCritical) {
-  if (isCritical) {
-    if (coverage < 90) return 'danger';
-    if (coverage < 95) return 'warning';
-    return 'success';
-  }
   if (coverage < 85) return 'danger';
-  if (coverage < 90) return 'warning';
+  if (coverage < 91) return 'warning';
   return 'success';
 }
 
-const statusLabels = { success: 'Normal', warning: 'Alerta', danger: 'Crítico' };
+const statusLabels = { success: 'Normal', warning: 'Alert', danger: 'Critical' };
 
 /** Heatmap card per area */
 function AreaHeatCard({ area, onClick, isSelected }) {
@@ -127,12 +122,12 @@ function AreaHeatCard({ area, onClick, isSelected }) {
             <span className="font-semibold text-xs text-brand-text-primary">{area.nombre}</span>
             {area.isCritical && (
               <span className="text-[8px] font-bold uppercase px-1.5 py-0.5 rounded bg-red-900/40 text-red-400 border border-red-800/40 tracking-wide">
-                Crítica
+                Critical
               </span>
             )}
           </div>
           <div className="text-[10px] text-brand-text-muted mt-0.5">
-            {area.actualPresent} / {area.hcExpected} operadores
+            {area.actualPresent} / {area.hcExpected} operators
           </div>
         </div>
         <StatusBadge status={status} label={statusLabels[status]} />
@@ -141,7 +136,7 @@ function AreaHeatCard({ area, onClick, isSelected }) {
       {/* Coverage progress bar */}
       <div className="space-y-1">
         <div className="flex justify-between text-[10px]">
-          <span className="text-brand-text-muted">Cobertura</span>
+          <span className="text-brand-text-muted">Coverage</span>
           <span className={`font-bold ${status === 'danger' ? 'text-red-400' : status === 'warning' ? 'text-yellow-400' : 'text-emerald-400'}`}>
             {coverage.toFixed(1)}%
           </span>
@@ -156,8 +151,8 @@ function AreaHeatCard({ area, onClick, isSelected }) {
 
       {/* HC mini stats row */}
       <div className="mt-3 flex gap-3 text-[9px] text-brand-text-muted">
-        <span>Diseño: <b className="text-brand-text-secondary">{area.hcDesign}</b></span>
-        <span>Esp: <b className="text-brand-text-secondary">{area.hcExpected}</b></span>
+        <span>Design: <b className="text-brand-text-secondary">{area.hcDesign}</b></span>
+        <span>Exp: <b className="text-brand-text-secondary">{area.hcExpected}</b></span>
         <span>Real: <b className="text-brand-text-secondary">{area.actualPresent}</b></span>
         <span>Δ: <b className={status === 'success' ? 'text-emerald-400' : 'text-red-400'}>{area.actualPresent - area.hcExpected}</b></span>
       </div>
@@ -214,7 +209,7 @@ function RiskImpactTable({ areas, totalExpected, hptObjective, hptActual }) {
         </div>
       ))}
       <div className="border-t border-brand-border pt-2.5 mt-1 flex justify-between text-[10px] text-brand-text-muted">
-        <span>● = Área Crítica (Bottleneck)</span>
+        <span>● = Critical Area (Bottleneck)</span>
         <span className="text-brand-text-secondary font-semibold">Δ HPT vs Obj: {(hptActual - hptObjective) > 0 ? '+' : ''}{(hptActual - hptObjective).toFixed(1)} h</span>
       </div>
     </div>
@@ -255,49 +250,49 @@ export default function ExecutiveDashboard() {
       id: 'upd',
       label: 'UPD Target',
       value: `${UPD_TARGET.toFixed(0)}`,
-      sub: 'Unidades por día — Fijo',
+      sub: 'Units per day — Fixed',
       icon: Target,
       deltaType: 'fixed',
     },
     {
       id: 'hc-design',
-      label: 'HC Diseño',
+      label: 'Design HC',
       value: HC_DESIGN_TOTAL.toLocaleString(),
-      sub: 'Estándar de Ingeniería Industrial',
+      sub: 'Industrial Engineering Standard',
       icon: Users,
       deltaType: 'fixed',
     },
     {
       id: 'hc-contratado',
-      label: 'HC Contratado',
+      label: 'Contracted HC',
       value: hcContratado.toLocaleString(),
-      sub: `Brecha: ${HC_DESIGN_TOTAL - hcContratado} vacantes vs diseño`,
+      sub: `Gap: ${HC_DESIGN_TOTAL - hcContratado} vacancies vs design`,
       icon: Users,
       deltaType: HC_DESIGN_TOTAL - hcContratado > 50 ? 'danger' : HC_DESIGN_TOTAL - hcContratado > 20 ? 'warning' : 'success',
     },
     {
       id: 'hc-expected',
-      label: 'HC Esperado Turno',
+      label: 'Expected Shift HC',
       value: (displaySnapshot?.hcExpectedTotal ?? 0).toLocaleString(),
-      sub: `Vs Diseño: ${HC_DESIGN_TOTAL - (displaySnapshot?.hcExpectedTotal ?? 0)} personas`,
+      sub: `Vs Design: ${HC_DESIGN_TOTAL - (displaySnapshot?.hcExpectedTotal ?? 0)} people`,
       icon: Clock,
       deltaType: 'neutral',
     },
     {
       id: 'hc-presente',
-      label: 'HC Presente',
+      label: 'Present HC',
       value: metrics.totalPresent.toLocaleString(),
-      sub: `Faltantes: ${metrics.totalExpected - metrics.totalPresent} operadores`,
+      sub: `Deficit: ${metrics.totalExpected - metrics.totalPresent} operators`,
       icon: Users,
-      deltaType: metrics.coberturaGeneral < 90 ? 'danger' : metrics.coberturaGeneral < 95 ? 'warning' : 'success',
+      deltaType: metrics.coberturaGeneral < 85 ? 'danger' : metrics.coberturaGeneral < 91 ? 'warning' : 'success',
     },
     {
       id: 'cobertura',
-      label: 'Cobertura Operacional',
+      label: 'Operational Coverage',
       value: `${metrics.coberturaGeneral.toFixed(1)}%`,
-      sub: `vs HC Esperado del Turno`,
+      sub: `vs Expected Shift HC`,
       icon: Activity,
-      deltaType: metrics.coberturaGeneral < 90 ? 'danger' : metrics.coberturaGeneral < 95 ? 'warning' : 'success',
+      deltaType: metrics.coberturaGeneral < 85 ? 'danger' : metrics.coberturaGeneral < 91 ? 'warning' : 'success',
     },
   ];
 
@@ -306,33 +301,33 @@ export default function ExecutiveDashboard() {
   const kpiRowTwo = [
     {
       id: 'hpt-obj',
-      label: 'HPT Objetivo',
+      label: 'Target HPT',
       value: `${HPT_OBJECTIVE.toFixed(1)} hrs`,
-      sub: `Hrs diseño / 49 UPD`,
+      sub: `Design hrs / 49 UPD`,
       icon: Target,
       deltaType: 'fixed',
     },
     {
       id: 'hpt-actual',
-      label: 'HPT Actual',
+      label: 'Actual HPT',
       value: `${metrics.hptActual.toFixed(1)} hrs`,
-      sub: `Con ${displaySnapshot?.otHabilitada ? 'OT habilitado' : 'Sin OT'} — turno activo`,
+      sub: `With ${displaySnapshot?.otHabilitada ? 'OT enabled' : 'No OT'} — active shift`,
       icon: Clock,
       deltaType: hptDelta > 20 ? 'danger' : hptDelta > 8 ? 'warning' : 'success',
     },
     {
       id: 'hpt-variacion',
-      label: 'Variación HPT',
+      label: 'HPT Variation',
       value: `${hptDelta > 0 ? '+' : ''}${metrics.hptDiferencia.toFixed(1)}%`,
-      sub: `${hptDelta > 0 ? '+' : ''}${hptDelta.toFixed(1)} hrs sobre el objetivo`,
+      sub: `${hptDelta > 0 ? '+' : ''}${hptDelta.toFixed(1)} hrs over target`,
       icon: hptDelta > 0 ? TrendingUp : hptDelta < 0 ? TrendingDown : Minus,
       deltaType: hptDelta > 20 ? 'danger' : hptDelta > 8 ? 'warning' : hptDelta > 0 ? 'warning' : 'success',
     },
     {
       id: 'riesgo',
-      label: 'Riesgo Operacional',
+      label: 'Operational Risk',
       value: `${metrics.riesgoScore}%`,
-      sub: `Nivel: ${metrics.riesgoNivel}`,
+      sub: `Level: ${metrics.riesgoNivel}`,
       icon: metrics.riesgoScore >= 70 ? XCircle : metrics.riesgoScore >= 45 ? AlertTriangle : CheckCircle,
       deltaType: metrics.riesgoScore >= 70 ? 'danger' : metrics.riesgoScore >= 45 ? 'warning' : 'success',
     },
@@ -345,10 +340,10 @@ export default function ExecutiveDashboard() {
       <section>
         <div className="flex items-center gap-2 mb-2.5">
           <span className="text-[10px] font-bold uppercase tracking-widest text-brand-text-muted">
-            Cadena de Headcount
+            Headcount Chain
           </span>
           <ChevronRight size={10} className="text-brand-text-muted" />
-          <span className="text-[10px] text-brand-text-muted/60">HC Diseño → Contratado → Esperado → Presente → Cobertura</span>
+          <span className="text-[10px] text-brand-text-muted/60">Design HC → Contracted → Expected → Present → Coverage</span>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3">
           {kpiRowOne.map((kpi) => (
@@ -361,7 +356,7 @@ export default function ExecutiveDashboard() {
       <section>
         <div className="flex items-center gap-2 mb-2.5">
           <span className="text-[10px] font-bold uppercase tracking-widest text-brand-text-muted">
-            Horas por Camión (HPT) y Riesgo Operacional
+            Hours Per Truck (HPT) and Operational Risk
           </span>
         </div>
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
@@ -380,10 +375,10 @@ export default function ExecutiveDashboard() {
           <div className="flex items-center justify-between px-5 py-3.5 border-b border-brand-border">
             <div>
               <h3 className="text-xs font-bold uppercase tracking-widest text-brand-text-secondary">
-                Heatmap Operacional de Planta
+                Operational Plant Heatmap
               </h3>
               <p className="text-[10px] text-brand-text-muted mt-0.5">
-                Cobertura vs HC Esperado por Área — turno activo
+                Coverage vs Expected HC by Area — active shift
               </p>
             </div>
             <div className="flex items-center gap-2 text-[9px] text-brand-text-muted">
@@ -426,16 +421,16 @@ export default function ExecutiveDashboard() {
           <div className="flex items-center justify-between px-5 py-3.5 border-b border-brand-border">
             <div>
               <h3 className="text-xs font-bold uppercase tracking-widest text-brand-text-secondary">
-                Top Riesgo por Área
+                Top Risk by Area
               </h3>
               <p className="text-[10px] text-brand-text-muted mt-0.5">
-                Ordenado por impacto en HPT — mayor desviación primero
+                Ranked by HPT impact — highest deviation first
               </p>
             </div>
             <div className={`text-[10px] font-bold px-2.5 py-1 rounded border ${
-              metrics.riesgoNivel === 'Crítico'
+              metrics.riesgoNivel === 'Critical'
                 ? 'bg-red-900/20 text-red-400 border-red-700/40'
-                : metrics.riesgoNivel === 'Alto'
+                : metrics.riesgoNivel === 'High'
                 ? 'bg-yellow-900/20 text-yellow-400 border-yellow-600/40'
                 : 'bg-emerald-900/20 text-emerald-400 border-emerald-700/40'
             }`}>
@@ -456,7 +451,7 @@ export default function ExecutiveDashboard() {
           }`}>
             <Zap size={11} className={displaySnapshot?.otHabilitada ? 'text-yellow-400' : 'text-brand-text-muted'} />
             <span>
-              Tiempo Extra: <b>{displaySnapshot?.otHabilitada ? 'Habilitado — compensando déficit' : 'Deshabilitado — mayor riesgo'}</b>
+              Overtime: <b>{displaySnapshot?.otHabilitada ? 'Enabled — compensating deficit' : 'Disabled — higher risk'}</b>
             </span>
           </div>
         </div>
@@ -467,24 +462,24 @@ export default function ExecutiveDashboard() {
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-brand-border">
           <div>
             <h3 className="text-xs font-bold uppercase tracking-widest text-brand-text-secondary">
-              Tendencia Histórica — Últimos 30 Días
+              Historical Trend — Last 30 Days
             </h3>
             <p className="text-[10px] text-brand-text-muted mt-0.5">
-              Cobertura Operacional (%) y HPT Actual (hrs) — línea de referencia HPT Obj: {HPT_OBJECTIVE}
+              Operational Coverage (%) and Actual HPT (hrs) — reference line HPT Obj: {HPT_OBJECTIVE}
             </p>
           </div>
           <div className="flex items-center gap-4 text-[9px] text-brand-text-muted">
             <span className="flex items-center gap-1.5">
               <span className="h-0.5 w-5 bg-brand-accent inline-block rounded-full" />
-              Cobertura %
+              Coverage %
             </span>
             <span className="flex items-center gap-1.5">
               <span className="h-0.5 w-5 bg-yellow-400 inline-block rounded-full" />
-              HPT Actual
+              Actual HPT
             </span>
             <span className="flex items-center gap-1.5">
               <span className="h-0.5 w-5 bg-red-600 inline-block rounded-full border-dashed" style={{ borderTop: '1px dashed' }} />
-              HPT Obj {HPT_OBJECTIVE}
+              Obj HPT {HPT_OBJECTIVE}
             </span>
           </div>
         </div>
@@ -541,7 +536,7 @@ export default function ExecutiveDashboard() {
                 yAxisId="left"
                 type="monotone"
                 dataKey="coberturaReal"
-                name="Cobertura"
+                name="Coverage"
                 unit="%"
                 stroke="#118DFF"
                 strokeWidth={2}
@@ -553,7 +548,7 @@ export default function ExecutiveDashboard() {
                 yAxisId="right"
                 type="monotone"
                 dataKey="actualHpt"
-                name="HPT Actual"
+                name="Actual HPT"
                 unit=" hrs"
                 stroke="#F1C40F"
                 strokeWidth={1.5}
@@ -568,22 +563,22 @@ export default function ExecutiveDashboard() {
         <div className="border-t border-brand-border px-5 py-3 grid grid-cols-4 gap-4 text-[10px]">
           {[
             {
-              label: 'Promedio Cobertura 30d',
+              label: '30d Average Coverage',
               value: `${(historicalDays.reduce((s, d) => s + d.coberturaReal, 0) / historicalDays.length).toFixed(1)}%`,
               col: 'text-brand-accent'
             },
             {
-              label: 'Promedio HPT 30d',
+              label: '30d Average HPT',
               value: `${(historicalDays.reduce((s, d) => s + d.actualHpt, 0) / historicalDays.length).toFixed(1)} hrs`,
               col: 'text-yellow-400'
             },
             {
-              label: 'Días sobre HPT Objetivo',
+              label: 'Days over Target HPT',
               value: `${historicalDays.filter(d => d.actualHpt > HPT_OBJECTIVE).length}/${historicalDays.length}`,
               col: 'text-red-400'
             },
             {
-              label: 'Días con Cobertura < 90%',
+              label: 'Days with Coverage < 90%',
               value: `${historicalDays.filter(d => d.coberturaReal < 90).length}/${historicalDays.length}`,
               col: 'text-red-400'
             }
