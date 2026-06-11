@@ -377,121 +377,9 @@ export default function HptImpactCenter() {
         ))}
       </div>
 
-      {/* ── ROW 2: Comparison Chart + Drill-Down Panel ── */}
-      <div className="grid grid-cols-1 xl:grid-cols-5 gap-4">
+      {/* ── ROW 2: Drill-Down Panel ── */}
+      <div className="bg-brand-card border border-brand-border rounded flex flex-col max-h-[600px]">
 
-        {/* Comparison Chart — 3/5 */}
-        <div className="xl:col-span-3 bg-brand-card border border-brand-border rounded flex flex-col">
-          <div className="flex items-center justify-between px-5 py-3.5 border-b border-brand-border flex-wrap gap-2">
-            <div>
-              <h3 className="text-xs font-bold uppercase tracking-widest text-brand-text-secondary">
-                Ideal vs Real — Attendance Comparison
-              </h3>
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <p className="text-[10px] text-brand-text-muted">
-                  {selectedNode
-                    ? <><span className="text-brand-text-muted">All Areas</span><span className="mx-1">›</span><span className="text-brand-accent font-semibold">{selectedNode.nombre}</span></>
-                    : <>100% design HC (Ideal) vs. actual attendance (Real)</>}
-                </p>
-                {selectedNode && (
-                  <button
-                    onClick={() => setSelectedNode(null)}
-                    className="text-[9px] text-brand-text-muted hover:text-brand-text-primary underline ml-1 flex-shrink-0"
-                  >
-                    Reset
-                  </button>
-                )}
-              </div>
-            </div>
-            <div className="flex items-center gap-4 text-[9px] text-brand-text-muted">
-              <span className="flex items-center gap-1.5"><span className="h-2 w-3 rounded-sm bg-[#2D3A4A] inline-block" /> Ideal (Design)</span>
-              <span className="flex items-center gap-1.5"><span className="h-2 w-3 rounded-sm bg-[#118DFF] inline-block" /> Real (Actual)</span>
-            </div>
-          </div>
-
-          <div className="p-5" style={{ height: 300 }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={comparisonData} margin={{ top: 10, right: 10, bottom: 0, left: 0 }} barCategoryGap="25%" barGap={3}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#2D2D2D" vertical={false} />
-                <XAxis
-                  dataKey="name"
-                  tick={{ fontSize: 9, fill: '#605E5C', fontFamily: 'Segoe UI' }}
-                  axisLine={{ stroke: '#2D2D2D' }}
-                  tickLine={false}
-                  interval={0}
-                  angle={-18}
-                  textAnchor="end"
-                  height={44}
-                />
-                <YAxis
-                  tick={{ fontSize: 9, fill: '#605E5C' }}
-                  axisLine={false}
-                  tickLine={false}
-                  tickFormatter={(v) => v >= 1000 ? `${(v/1000).toFixed(1)}k` : v}
-                  width={38}
-                />
-                <Tooltip
-                  content={({ active, payload, label }) => {
-                    if (!active || !payload?.length) return null;
-                    const d = comparisonData.find(x => x.name === label);
-                    return (
-                      <div className="bg-[#1D1D1D] border border-[#2D2D2D] rounded px-3 py-2.5 text-xs">
-                        <div className="text-[#A19F9D] font-semibold mb-1.5">{label}</div>
-                        <div className="flex justify-between gap-6">
-                          <span className="text-[#A19F9D]">Ideal (Design):</span>
-                          <span className="font-bold text-[#4A90D9]">{d?.Ideal}</span>
-                        </div>
-                        <div className="flex justify-between gap-6">
-                          <span className="text-[#A19F9D]">Real (Actual):</span>
-                          <span className="font-bold" style={{ color: d?.fill }}>{d?.Real}</span>
-                        </div>
-                        <div className="flex justify-between gap-6 mt-1 pt-1 border-t border-[#2D2D2D]">
-                          <span className="text-[#A19F9D]">Op. Capacity:</span>
-                          <span className="font-bold" style={{ color: d?.fill }}>{d?.opCap?.toFixed(1)}%</span>
-                        </div>
-                      </div>
-                    );
-                  }}
-                />
-                {/* Ideal bars (design = 100%) */}
-                <Bar dataKey="Ideal" name="Ideal" fill="#2D3A4A" radius={[2,2,0,0]} />
-                {/* Real bars — color-coded by status */}
-                <Bar dataKey="Real" name="Real" radius={[2,2,0,0]}>
-                  {comparisonData.map((entry, i) => (
-                    <Cell key={i} fill={entry.fill} />
-                  ))}
-                </Bar>
-              </ComposedChart>
-            </ResponsiveContainer>
-          </div>
-
-          {/* Summary strip */}
-          <div className="border-t border-brand-border px-5 py-3 grid grid-cols-4 gap-4 text-[10px]">
-            <div>
-              <div className="text-brand-text-muted">Total Design HC</div>
-              <div className="font-bold text-blue-400 text-sm">{chartSource.reduce((s,n)=>s+(n.hcDesign||0),0).toLocaleString()}</div>
-            </div>
-            <div>
-              <div className="text-brand-text-muted">Total Present HC</div>
-              <div className={`font-bold text-sm ${hptDelta > 0 ? 'text-red-400' : 'text-emerald-400'}`}>
-                {chartSource.reduce((s,n)=>s+(n.actualPresent||0),0).toLocaleString()}
-              </div>
-            </div>
-            <div>
-              <div className="text-brand-text-muted">HPT Actual</div>
-              <div className={`font-bold text-sm ${hptDelta > 20 ? 'text-red-400' : hptDelta > 8 ? 'text-yellow-400' : 'text-emerald-400'}`}>
-                {metrics.hptActual.toFixed(1)} hrs
-              </div>
-            </div>
-            <div>
-              <div className="text-brand-text-muted">HPT Objective</div>
-              <div className="font-bold text-sm text-blue-400">{HPT_OBJECTIVE.toFixed(1)} hrs</div>
-            </div>
-          </div>
-        </div>
-
-        {/* ── Drill-Down Panel — 2/5 ── */}
-        <div className="xl:col-span-2 bg-brand-card border border-brand-border rounded flex flex-col">
           {/* Panel header */}
           <div className="flex items-center justify-between px-5 py-3.5 border-b border-brand-border">
             <div>
@@ -546,6 +434,113 @@ export default function HptImpactCenter() {
                 {hptDelta > 0 ? '+' : ''}{hptDelta.toFixed(1)} hrs
               </b>
             </span>
+          </div>
+        </div>
+
+      {/* ── ROW 3: Comparison Chart ── */}
+      <div className="bg-brand-card border border-brand-border rounded flex flex-col">
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-brand-border flex-wrap gap-2">
+          <div>
+            <h3 className="text-xs font-bold uppercase tracking-widest text-brand-text-secondary">
+              Ideal vs Real — Attendance Comparison
+            </h3>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <p className="text-[10px] text-brand-text-muted">
+                {selectedNode
+                  ? <><span className="text-brand-text-muted">All Areas</span><span className="mx-1">›</span><span className="text-brand-accent font-semibold">{selectedNode.nombre}</span></>
+                  : <>100% design HC (Ideal) vs. actual attendance (Real)</>}
+              </p>
+              {selectedNode && (
+                <button
+                  onClick={() => setSelectedNode(null)}
+                  className="text-[9px] text-brand-text-muted hover:text-brand-text-primary underline ml-1 flex-shrink-0"
+                >
+                  Reset
+                </button>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center gap-4 text-[9px] text-brand-text-muted">
+            <span className="flex items-center gap-1.5"><span className="h-2 w-3 rounded-sm bg-[#2D3A4A] inline-block" /> Ideal (Design)</span>
+            <span className="flex items-center gap-1.5"><span className="h-2 w-3 rounded-sm bg-[#118DFF] inline-block" /> Real (Actual)</span>
+          </div>
+        </div>
+
+        <div className="p-5" style={{ height: 300 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <ComposedChart data={comparisonData} margin={{ top: 10, right: 10, bottom: 0, left: 0 }} barCategoryGap="25%" barGap={3}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#2D2D2D" vertical={false} />
+              <XAxis
+                dataKey="name"
+                tick={{ fontSize: 9, fill: '#605E5C', fontFamily: 'Segoe UI' }}
+                axisLine={{ stroke: '#2D2D2D' }}
+                tickLine={false}
+                interval={0}
+                angle={0}
+                textAnchor="middle"
+                height={24}
+              />
+              <YAxis
+                tick={{ fontSize: 9, fill: '#605E5C' }}
+                axisLine={false}
+                tickLine={false}
+                tickFormatter={(v) => v >= 1000 ? `${(v/1000).toFixed(1)}k` : v}
+                width={38}
+              />
+              <Tooltip
+                content={({ active, payload, label }) => {
+                  if (!active || !payload?.length) return null;
+                  const d = comparisonData.find(x => x.name === label);
+                  return (
+                    <div className="bg-[#1D1D1D] border border-[#2D2D2D] rounded px-3 py-2.5 text-xs">
+                      <div className="text-[#A19F9D] font-semibold mb-1.5">{label}</div>
+                      <div className="flex justify-between gap-6">
+                        <span className="text-[#A19F9D]">Ideal (Design):</span>
+                        <span className="font-bold text-[#4A90D9]">{d?.Ideal}</span>
+                      </div>
+                      <div className="flex justify-between gap-6">
+                        <span className="text-[#A19F9D]">Real (Actual):</span>
+                        <span className="font-bold" style={{ color: d?.fill }}>{d?.Real}</span>
+                      </div>
+                      <div className="flex justify-between gap-6 mt-1 pt-1 border-t border-[#2D2D2D]">
+                        <span className="text-[#A19F9D]">Op. Capacity:</span>
+                        <span className="font-bold" style={{ color: d?.fill }}>{d?.opCap?.toFixed(1)}%</span>
+                      </div>
+                    </div>
+                  );
+                }}
+              />
+              <Bar dataKey="Ideal" name="Ideal" fill="#2D3A4A" radius={[2,2,0,0]} />
+              <Bar dataKey="Real" name="Real" radius={[2,2,0,0]}>
+                {comparisonData.map((entry, i) => (
+                  <Cell key={i} fill={entry.fill} />
+                ))}
+              </Bar>
+            </ComposedChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Summary strip */}
+        <div className="border-t border-brand-border px-5 py-3 grid grid-cols-4 gap-4 text-[10px]">
+          <div>
+            <div className="text-brand-text-muted">Total Design HC</div>
+            <div className="font-bold text-blue-400 text-sm">{chartSource.reduce((s,n)=>s+(n.hcDesign||0),0).toLocaleString()}</div>
+          </div>
+          <div>
+            <div className="text-brand-text-muted">Total Present HC</div>
+            <div className={`font-bold text-sm ${hptDelta > 0 ? 'text-red-400' : 'text-emerald-400'}`}>
+              {chartSource.reduce((s,n)=>s+(n.actualPresent||0),0).toLocaleString()}
+            </div>
+          </div>
+          <div>
+            <div className="text-brand-text-muted">HPT Actual</div>
+            <div className={`font-bold text-sm ${hptDelta > 20 ? 'text-red-400' : hptDelta > 8 ? 'text-yellow-400' : 'text-emerald-400'}`}>
+              {metrics.hptActual.toFixed(1)} hrs
+            </div>
+          </div>
+          <div>
+            <div className="text-brand-text-muted">HPT Objective</div>
+            <div className="font-bold text-sm text-blue-400">{HPT_OBJECTIVE.toFixed(1)} hrs</div>
           </div>
         </div>
       </div>
