@@ -140,15 +140,23 @@ function HierarchyRow({ node, depth = 0, otEnabled, expandedSet, onToggle, selec
   const covColor  = m.status === 'danger' ? 'text-red-400'    : m.status === 'warning' ? 'text-yellow-400' : 'text-emerald-400';
   const barColor  = m.status === 'danger' ? 'bg-red-600'      : m.status === 'warning' ? 'bg-yellow-400'   : 'bg-emerald-500';
 
-  // Children to show when expanded — prefer subAreas, then grupos
-  const children = node.subAreas?.length  ? node.subAreas
-                 : node.grupos?.length     ? node.grupos
-                 : [];
+  // Walk all hierarchy levels: subAreas → grupos → estaciones → children
+  const children =
+    node.subAreas?.length    ? node.subAreas
+    : node.grupos?.length    ? node.grupos
+    : node.estaciones?.length ? node.estaciones
+    : node.children?.length   ? node.children
+    : [];
   const hasChildren = children.length > 0;
   const isExpanded  = expandedSet.has(node.id || node.nombre);
   const isSelected  = selectedNode?.id === node.id && selectedNode?.nombre === node.nombre;
 
-  const paddingLeft = depth === 0 ? 'pl-4' : depth === 1 ? 'pl-8' : 'pl-12';
+  const paddingLeft =
+    depth === 0 ? 'pl-4'
+    : depth === 1 ? 'pl-8'
+    : depth === 2 ? 'pl-12'
+    : depth === 3 ? 'pl-16'
+    : 'pl-20';
 
   const handleClick = () => {
     // Always select — also toggle expand if has children
@@ -270,54 +278,40 @@ export default function HptImpactCenter() {
   // Top-level ramas for the drill-down panel
   const ramas = metrics.ramasEnriched || [];
 
-  // ── Waterfall source: children of selected node, or top-level ramas ──
-  const waterfallSource = (() => {
+  // ── Chart source: children of selected node, or top-level ramas ──
+  const chartSource = (() => {
     if (!selectedNode) return ramas;
-    const children = selectedNode.subAreas?.length ? selectedNode.subAreas
-                   : selectedNode.grupos?.length   ? selectedNode.grupos
-                   : [];
-    return children.length > 0 ? children : [selectedNode];
+    const kids =
+      selectedNode.subAreas?.length    ? selectedNode.subAreas
+      : selectedNode.grupos?.length    ? selectedNode.grupos
+      : selectedNode.estaciones?.length ? selectedNode.estaciones
+      : selectedNode.children?.length   ? selectedNode.children
+      : [];
+    return kids.length > 0 ? kids : [selectedNode];
   })();
 
-  const waterfallLabel = selectedNode ? selectedNode.nombre : 'All Areas';
-
-  // ── Waterfall data ──
-  const waterfallData = (() => {
-    const bars = [];
-    let running = HPT_OBJECTIVE;
-
-    bars.push({ name: 'HPT Obj.', base: 0, value: HPT_OBJECTIVE, fill: '#118DFF', isStart: true });
-
-    waterfallSource.forEach((node) => {
-      const m = calcNodeMetrics(node, otEnabled);
-      if (m.hptImpact > 0.01) {
-        const shortName = node.nombre
-          .replace('ASSEMBLY w/ KF LOGS', 'w/ KF LOGS')
-          .replace('ASSEMBLY INDIRECT', 'Indirect')
-          .replace('FABRICATION', 'Fabrication')
-          .replace('FABRICATION DIRECT', 'FAB Direct')
-          .replace('FABRICATION INDIRECT', 'FAB Indirect');
-        bars.push({
-          name: shortName,
-          base: running,
-          value: parseFloat(m.hptImpact.toFixed(2)),
-          fill: m.status === 'danger' ? '#A80000' : m.status === 'warning' ? '#F1C40F' : '#107C41',
-          isCritical: node.isCritical,
-        });
-        running += m.hptImpact;
-      }
-    });
-
-    bars.push({
-      name: 'HPT Actual',
-      base: 0,
-      value: parseFloat(metrics.hptActual.toFixed(2)),
-      fill: hptDelta > 20 ? '#A80000' : hptDelta > 8 ? '#F1C40F' : '#107C41',
-      isEnd: true,
-    });
-
-    return bars;
-  })();
+  // ── Ideal vs Real comparison data ──
+  const comparisonData = chartSource.map((node) => {
+    const design  = node.hcDesign  || 0;
+    const present = node.actualPresent || 0;
+    const opCap   = design > 0 ? (present / design) * 100 : 100;
+    const status  = opCap < 85 ? 'danger' : opCap < 92 ? 'warning' : 'success';
+    const shortName = node.nombre
+      .replace('ASSEMBLY w/ KF LOGS', 'Asm w/KF')
+      .replace('ASSEMBLY INDIRECT', 'Asm Indirect')
+      .replace('KF LOGISTICS', 'KF Log.')
+      .replace('FABRICATION DIRECT', 'FAB Direct')
+      .replace('FABRICATION INDIRECT', 'FAB Indirect')
+      .replace('FABRICATION', 'Fabrication');
+    return {
+      name: shortName,
+      Ideal: design,
+      Real: present,
+      opCap,
+      status,
+      fill: status === 'danger' ? '#A80000' : status === 'warning' ? '#F1C40F' : '#107C41',
+    };
+  });
 
   // ── Scatter plot ──
   const scatterData = historicalDays.map((d) => ({
@@ -393,21 +387,21 @@ export default function HptImpactCenter() {
         ))}
       </div>
 
-      {/* ── ROW 2: Waterfall + Drill-Down Panel ── */}
+      {/* ── ROW 2: Comparison Chart + Drill-Down Panel ── */}
       <div className="grid grid-cols-1 xl:grid-cols-5 gap-4">
 
-        {/* Waterfall Chart — 3/5 */}
+        {/* Comparison Chart — 3/5 */}
         <div className="xl:col-span-3 bg-brand-card border border-brand-border rounded flex flex-col">
           <div className="flex items-center justify-between px-5 py-3.5 border-b border-brand-border flex-wrap gap-2">
             <div>
               <h3 className="text-xs font-bold uppercase tracking-widest text-brand-text-secondary">
-                HPT Impact Waterfall
+                Ideal vs Real — Attendance Comparison
               </h3>
               <div className="flex items-center gap-1.5 mt-0.5">
                 <p className="text-[10px] text-brand-text-muted">
                   {selectedNode
-                    ? <><span className="text-brand-text-muted">All Areas</span><span className="text-brand-text-muted mx-1">›</span><span className="text-brand-accent font-semibold">{selectedNode.nombre}</span> — sub-area breakdown</>
-                    : <>Attendance gap contribution per area — {HPT_OBJECTIVE} hrs target</>}
+                    ? <><span className="text-brand-text-muted">All Areas</span><span className="mx-1">›</span><span className="text-brand-accent font-semibold">{selectedNode.nombre}</span></>
+                    : <>100% design HC (Ideal) vs. actual attendance (Real)</>}
                 </p>
                 {selectedNode && (
                   <button
@@ -419,17 +413,15 @@ export default function HptImpactCenter() {
                 )}
               </div>
             </div>
-            {!otEnabled && (
-              <div className="flex items-center gap-1.5 text-[10px] text-yellow-400 bg-yellow-900/10 border border-yellow-700/30 px-2.5 py-1 rounded">
-                <Info size={10} />
-                No OT — overtime cascade not computed
-              </div>
-            )}
+            <div className="flex items-center gap-4 text-[9px] text-brand-text-muted">
+              <span className="flex items-center gap-1.5"><span className="h-2 w-3 rounded-sm bg-[#2D3A4A] inline-block" /> Ideal (Design)</span>
+              <span className="flex items-center gap-1.5"><span className="h-2 w-3 rounded-sm bg-[#118DFF] inline-block" /> Real (Actual)</span>
+            </div>
           </div>
 
-          <div className="p-5" style={{ height: 280 }}>
+          <div className="p-5" style={{ height: 300 }}>
             <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={waterfallData} margin={{ top: 12, right: 12, bottom: 0, left: 0 }}>
+              <ComposedChart data={comparisonData} margin={{ top: 10, right: 10, bottom: 0, left: 0 }} barCategoryGap="25%" barGap={3}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#2D2D2D" vertical={false} />
                 <XAxis
                   dataKey="name"
@@ -437,68 +429,62 @@ export default function HptImpactCenter() {
                   axisLine={{ stroke: '#2D2D2D' }}
                   tickLine={false}
                   interval={0}
-                  angle={-20}
+                  angle={-18}
                   textAnchor="end"
-                  height={42}
+                  height={44}
                 />
                 <YAxis
-                  domain={[230, Math.ceil(metrics.hptActual + 10)]}
                   tick={{ fontSize: 9, fill: '#605E5C' }}
                   axisLine={false}
                   tickLine={false}
-                  tickFormatter={(v) => `${v}h`}
+                  tickFormatter={(v) => v >= 1000 ? `${(v/1000).toFixed(1)}k` : v}
                   width={38}
                 />
                 <Tooltip
-                  content={({ active, payload }) => {
+                  content={({ active, payload, label }) => {
                     if (!active || !payload?.length) return null;
-                    const d = payload[0]?.payload;
+                    const d = comparisonData.find(x => x.name === label);
                     return (
-                      <div className="bg-[#1D1D1D] border border-[#2D2D2D] rounded px-3 py-2 text-xs">
-                        <div className="text-[#A19F9D] font-semibold mb-1">{d?.name}</div>
-                        {d?.isStart && <div className="text-[#118DFF] font-bold">HPT Objective: {d.value} hrs</div>}
-                        {d?.isEnd   && <div className="font-bold" style={{ color: d.fill }}>HPT Actual: {d.value} hrs</div>}
-                        {!d?.isStart && !d?.isEnd && (
-                          <>
-                            <div className="text-[#A19F9D]">Contribution: <b className="text-[#F3F2F1]">+{d?.value?.toFixed(2)} hrs</b></div>
-                            {d?.isCritical && <div className="text-red-400 mt-0.5 text-[9px]">⚠ Critical Area</div>}
-                          </>
-                        )}
+                      <div className="bg-[#1D1D1D] border border-[#2D2D2D] rounded px-3 py-2.5 text-xs">
+                        <div className="text-[#A19F9D] font-semibold mb-1.5">{label}</div>
+                        <div className="flex justify-between gap-6">
+                          <span className="text-[#A19F9D]">Ideal (Design):</span>
+                          <span className="font-bold text-[#4A90D9]">{d?.Ideal}</span>
+                        </div>
+                        <div className="flex justify-between gap-6">
+                          <span className="text-[#A19F9D]">Real (Actual):</span>
+                          <span className="font-bold" style={{ color: d?.fill }}>{d?.Real}</span>
+                        </div>
+                        <div className="flex justify-between gap-6 mt-1 pt-1 border-t border-[#2D2D2D]">
+                          <span className="text-[#A19F9D]">Op. Capacity:</span>
+                          <span className="font-bold" style={{ color: d?.fill }}>{d?.opCap?.toFixed(1)}%</span>
+                        </div>
                       </div>
                     );
                   }}
                 />
-                <ReferenceLine y={HPT_OBJECTIVE} stroke="#118DFF" strokeDasharray="4 3" strokeWidth={1.5} />
-                <Bar dataKey="base"  stackId="stack" fill="transparent" />
-                <Bar dataKey="value" stackId="stack" radius={[3, 3, 0, 0]}>
-                  {waterfallData.map((entry, index) => (
-                    <Cell key={index} fill={entry.fill} />
+                {/* Ideal bars (design = 100%) */}
+                <Bar dataKey="Ideal" name="Ideal" fill="#2D3A4A" radius={[2,2,0,0]} />
+                {/* Real bars — color-coded by status */}
+                <Bar dataKey="Real" name="Real" radius={[2,2,0,0]}>
+                  {comparisonData.map((entry, i) => (
+                    <Cell key={i} fill={entry.fill} />
                   ))}
-                  <LabelList
-                    dataKey="value"
-                    position="top"
-                    style={{ fontSize: 8, fill: '#A19F9D', fontFamily: 'Segoe UI' }}
-                    formatter={(v) => {
-                      const d = waterfallData.find(w => w.value === v);
-                      if (d?.isStart || d?.isEnd) return `${v}h`;
-                      return v > 0.1 ? `+${v.toFixed(1)}h` : '';
-                    }}
-                  />
                 </Bar>
               </ComposedChart>
             </ResponsiveContainer>
           </div>
 
           {/* Summary strip */}
-          <div className="border-t border-brand-border px-5 py-3 grid grid-cols-3 gap-4 text-[10px]">
+          <div className="border-t border-brand-border px-5 py-3 grid grid-cols-4 gap-4 text-[10px]">
             <div>
-              <div className="text-brand-text-muted">HPT Objective</div>
-              <div className="font-bold text-blue-400 text-sm">{HPT_OBJECTIVE.toFixed(1)} hrs</div>
+              <div className="text-brand-text-muted">Total Design HC</div>
+              <div className="font-bold text-blue-400 text-sm">{chartSource.reduce((s,n)=>s+(n.hcDesign||0),0).toLocaleString()}</div>
             </div>
             <div>
-              <div className="text-brand-text-muted">Absolute Deviation</div>
+              <div className="text-brand-text-muted">Total Present HC</div>
               <div className={`font-bold text-sm ${hptDelta > 0 ? 'text-red-400' : 'text-emerald-400'}`}>
-                {hptDelta > 0 ? '+' : ''}{hptDelta.toFixed(1)} hrs
+                {chartSource.reduce((s,n)=>s+(n.actualPresent||0),0).toLocaleString()}
               </div>
             </div>
             <div>
@@ -506,6 +492,10 @@ export default function HptImpactCenter() {
               <div className={`font-bold text-sm ${hptDelta > 20 ? 'text-red-400' : hptDelta > 8 ? 'text-yellow-400' : 'text-emerald-400'}`}>
                 {metrics.hptActual.toFixed(1)} hrs
               </div>
+            </div>
+            <div>
+              <div className="text-brand-text-muted">HPT Objective</div>
+              <div className="font-bold text-sm text-blue-400">{HPT_OBJECTIVE.toFixed(1)} hrs</div>
             </div>
           </div>
         </div>
