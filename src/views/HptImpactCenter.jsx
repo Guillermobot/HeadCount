@@ -334,7 +334,7 @@ export default function HptImpactCenter() {
     <div className="space-y-5">
 
       {/* ── ROW 1: KPI Cards ── */}
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 xl:grid-cols-3 gap-3">
         {[
           {
             label: 'HPT Objective',
@@ -363,16 +363,6 @@ export default function HptImpactCenter() {
             icon: hptDelta > 8
               ? <AlertTriangle size={14} className="text-yellow-400"  />
               : <CheckCircle   size={14} className="text-emerald-400" />,
-          },
-          {
-            label: 'Overtime (OT)',
-            value: otEnabled ? 'Enabled' : 'Disabled',
-            sub: otEnabled
-              ? 'Mitigating deficit — raises HPT via inefficiency factor'
-              : 'No compensation — risk of missing 49 UPD',
-            color: otEnabled ? 'text-yellow-400' : 'text-brand-text-secondary',
-            bar:   otEnabled ? 'bg-yellow-400'   : 'bg-brand-border',
-            icon: <Zap size={14} className={otEnabled ? 'text-yellow-400' : 'text-brand-text-muted'} />,
           },
         ].map((k, i) => (
           <div key={i} className="relative bg-brand-card border border-brand-border rounded p-4 h-28 flex flex-col justify-between overflow-hidden">

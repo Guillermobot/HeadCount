@@ -309,44 +309,6 @@ export const MainLayout = ({ children }) => {
                 </button>
               </div>
 
-              {/* Interactive Simulation Sandbox Quick Settings */}
-              <div className="pt-6 border-t border-brand-border">
-                <div className="bg-brand-card border border-brand-border rounded p-3 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-[10px] text-brand-text-secondary uppercase">Sandbox Rápido</span>
-                    {isSimulating && (
-                      <button 
-                        onClick={resetSimulation} 
-                        className="text-[10px] text-brand-danger hover:underline flex items-center gap-0.5"
-                      >
-                        <RotateCcw size={8} /> Restablecer
-                      </button>
-                    )}
-                  </div>
-                  <p className="text-[10px] text-brand-text-muted leading-relaxed">
-                    Modifica variables para evaluar el impacto en HPT y Riesgo en tiempo real.
-                  </p>
-                  <div className="space-y-2 pt-1">
-                    <div className="flex justify-between items-center text-[10px]">
-                      <span className="text-brand-text-secondary">Tiempo Extra (OT):</span>
-                      <span className="font-semibold text-brand-text-primary">
-                        {displaySnapshot?.otHabilitada ? 'Habilitado' : 'Deshabilitado'}
-                      </span>
-                    </div>
-                    <button
-                      onClick={() => {
-                        startSimulation();
-                        setTimeout(() => {
-                          updateSimulatedOt(!displaySnapshot?.otHabilitada);
-                        }, 50);
-                      }}
-                      className="w-full py-1.5 rounded bg-brand-accent/20 hover:bg-brand-accent/30 border border-brand-accent/40 text-brand-accent font-semibold text-[10px] transition-colors"
-                    >
-                      Alternar Tiempo Extra
-                    </button>
-                  </div>
-                </div>
-              </div>
 
             </div>
           </div>
