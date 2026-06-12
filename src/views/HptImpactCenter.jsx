@@ -96,8 +96,8 @@ function calcNodeMetrics(node, otEnabled) {
     : 0;
 
   const status =
-    opCapacity < 85 ? 'danger' :
-    opCapacity < 91 ? 'warning' : 'success';
+    attendance < 85 ? 'danger' :
+    attendance < 91 ? 'warning' : 'success';
 
   return { attendance, opCapacity, hptImpact, deficit, status };
 }
@@ -290,12 +290,12 @@ export default function HptImpactCenter() {
     return kids.length > 0 ? kids : [selectedNode];
   })();
 
-  // ── Ideal vs Real comparison data ──
+  // ── Expected vs Real comparison data ──
   const comparisonData = chartSource.map((node) => {
-    const design  = node.hcDesign  || 0;
-    const present = node.actualPresent || 0;
-    const opCap   = design > 0 ? (present / design) * 100 : 100;
-    const status  = opCap < 85 ? 'danger' : opCap < 91 ? 'warning' : 'success';
+    const expected = node.hcExpected || 0;
+    const present  = node.actualPresent || 0;
+    const opCap    = expected > 0 ? (present / expected) * 100 : 100;
+    const status   = opCap < 85 ? 'danger' : opCap < 91 ? 'warning' : 'success';
     const shortName = node.nombre
       .replace('ASSEMBLY w/ KF LOGS', 'Asm w/KF')
       .replace('ASSEMBLY INDIRECT', 'Asm Indirect')
@@ -305,7 +305,7 @@ export default function HptImpactCenter() {
       .replace('FABRICATION', 'Fabrication');
     return {
       name: shortName,
-      Ideal: design,
+      Expected: expected,
       Real: present,
       opCap,
       status,
@@ -448,13 +448,13 @@ export default function HptImpactCenter() {
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-brand-border flex-wrap gap-2">
           <div>
             <h3 className="text-xs font-bold uppercase tracking-widest text-brand-text-secondary">
-              Ideal vs Real — Attendance Comparison
+              Expected vs Real — Attendance Comparison
             </h3>
             <div className="flex items-center gap-1.5 mt-0.5">
               <p className="text-[10px] text-brand-text-muted">
                 {selectedNode
                   ? <><span className="text-brand-text-muted">All Areas</span><span className="mx-1">›</span><span className="text-brand-accent font-semibold">{selectedNode.nombre}</span></>
-                  : <>100% design HC (Ideal) vs. actual attendance (Real)</>}
+                  : <>Shift plan HC (Expected) vs. actual attendance (Real)</>}
               </p>
               {selectedNode && (
                 <button
@@ -467,7 +467,7 @@ export default function HptImpactCenter() {
             </div>
           </div>
           <div className="flex items-center gap-4 text-[9px] text-brand-text-muted">
-            <span className="flex items-center gap-1.5"><span className="h-2 w-3 rounded-sm bg-[#2D3A4A] inline-block" /> Ideal (Design)</span>
+            <span className="flex items-center gap-1.5"><span className="h-2 w-3 rounded-sm bg-[#2D3A4A] inline-block" /> Expected (Plan)</span>
             <span className="flex items-center gap-1.5"><span className="h-2 w-3 rounded-sm bg-[#118DFF] inline-block" /> Real (Actual)</span>
           </div>
         </div>
@@ -501,8 +501,8 @@ export default function HptImpactCenter() {
                     <div className="bg-[#1D1D1D] border border-[#2D2D2D] rounded px-3 py-2.5 text-xs">
                       <div className="text-[#A19F9D] font-semibold mb-1.5">{label}</div>
                       <div className="flex justify-between gap-6">
-                        <span className="text-[#A19F9D]">Ideal (Design):</span>
-                        <span className="font-bold text-[#4A90D9]">{d?.Ideal}</span>
+                        <span className="text-[#A19F9D]">Expected (Plan):</span>
+                        <span className="font-bold text-[#4A90D9]">{d?.Expected}</span>
                       </div>
                       <div className="flex justify-between gap-6">
                         <span className="text-[#A19F9D]">Real (Actual):</span>
@@ -516,7 +516,7 @@ export default function HptImpactCenter() {
                   );
                 }}
               />
-              <Bar dataKey="Ideal" name="Ideal" fill="#2D3A4A" radius={[2,2,0,0]} />
+              <Bar dataKey="Expected" name="Expected" fill="#2D3A4A" radius={[2,2,0,0]} />
               <Bar dataKey="Real" name="Real" radius={[2,2,0,0]}>
                 {comparisonData.map((entry, i) => (
                   <Cell key={i} fill={entry.fill} />

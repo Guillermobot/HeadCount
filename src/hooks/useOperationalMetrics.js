@@ -73,7 +73,7 @@ export const useOperationalMetrics = (snapshot) => {
   
   let hptActual = HPT_OBJECTIVE;
   if (snapshot.otHabilitada) {
-    const missingHours = Math.max(0, HC_DESIGN_TOTAL - totalPresent) * HOURS_PER_SHIFT;
+    const missingHours = Math.max(0, totalExpected - totalPresent) * HOURS_PER_SHIFT;
     hptActual = ((totalPresent * HOURS_PER_SHIFT) + (missingHours * OT_INEFFICIENCY_FACTOR)) / 49.0;
   } else {
     hptActual = (totalPresent * HOURS_PER_SHIFT) / 49.0;

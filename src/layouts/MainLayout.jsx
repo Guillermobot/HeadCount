@@ -293,8 +293,8 @@ export const MainLayout = ({ children }) => {
                   Active Shift
                 </label>
                 <div className="space-y-1">
-                  {/* AQUÍ SE AGREGÓ EL TURNO TOTAL AL ARREGLO */}
-                  {['Total', 'Turno A', 'Turno B', 'Turno C'].map((turno) => (
+                  {/* AQUÍ SE DEJA SOLO EL TURNO TOTAL (9am) COMO SE SOLICITÓ */}
+                  {['Total'].map((turno) => (
                     <button
                       key={turno}
                       onClick={() => setFilter('turno', turno)}
@@ -304,7 +304,7 @@ export const MainLayout = ({ children }) => {
                           : 'bg-brand-card border-brand-border text-brand-text-secondary hover:border-brand-text-muted'
                       }`}
                     >
-                      {turno === 'Total' ? '9AM:' : turno === 'Turno A' ? 'Shift A' : turno === 'Turno B' ? 'Shift B' : 'Shift C'}
+                      {turno === 'Total' ? '9AM:' : turno}
                     </button>
                   ))}
                 </div>
