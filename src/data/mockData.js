@@ -19,10 +19,10 @@ export const laborBuckets = [
 ];
 
 const LEGACY_AREAS = [
-  { nombre: "KF Logistics", hcDesign: 300, hcExpected: 230, actualPresent: 215, isCritical: true, children: [], absences: { pto: 5, medical: 5, unjustified: 5 }, areaHpt: 242.0 },
-  { nombre: "Assembly indirect", hcDesign: 400, hcExpected: 290, actualPresent: 270, isCritical: false, children: [], absences: { pto: 10, medical: 2, unjustified: 8 }, areaHpt: 246.5 },
-  { nombre: "Fabrication indirect", hcDesign: 300, hcExpected: 220, actualPresent: 210, isCritical: false, children: [], absences: { pto: 2, medical: 6, unjustified: 2 }, areaHpt: 239.8 },
-  { nombre: "Fabrication direct", hcDesign: 498, hcExpected: 372, actualPresent: 339, isCritical: true, children: [], absences: { pto: 15, medical: 8, unjustified: 10 }, areaHpt: 251.2 },
+  { nombre: "ASSEMBLY w/ KF LOGS", hcDesign: 804, hcExpected: 597, actualPresent: 555, isCritical: true, children: [], absences: { pto: 15, medical: 10, unjustified: 17 }, areaHpt: 242.0 },
+  { nombre: "ASSEMBLY INDIRECT", hcDesign: 311, hcExpected: 231, actualPresent: 215, isCritical: false, children: [], absences: { pto: 8, medical: 3, unjustified: 5 }, areaHpt: 246.5 },
+  { nombre: "KF LOGISTICS", hcDesign: 49, hcExpected: 36, actualPresent: 34, isCritical: true, children: [], absences: { pto: 1, medical: 1, unjustified: 0 }, areaHpt: 239.8 },
+  { nombre: "FABRICATION", hcDesign: 334, hcExpected: 248, actualPresent: 230, isCritical: true, children: [], absences: { pto: 5, medical: 5, unjustified: 8 }, areaHpt: 251.2 },
 ];
 
 const RAMAS_TEMPLATE = [
@@ -30,37 +30,37 @@ const RAMAS_TEMPLATE = [
     id: 'assembly', nombre: 'ASSEMBLY', hcDesign: 1164, hcExpected: 1164, actualPresent: 0, isCritical: true,
     subAreas: [
       {
-        id: 'assembly_kflogs', nombre: 'ASSEMBLY w/ KF LOGS', hcDesign: 853, hcExpected: 853, actualPresent: 0, isCritical: true,
+        id: 'assembly_kflogs', nombre: 'ASSEMBLY w/ KF LOGS', hcDesign: 804, hcExpected: 804, actualPresent: 0, isCritical: true,
         grupos: [
           {
-            id: 'lec', nombre: '+ LEC', hcDesign: 358, hcExpected: 358, actualPresent: 0, isCritical: true,
+            id: 'lec', nombre: '+ LEC', hcDesign: 335, hcExpected: 335, actualPresent: 0, isCritical: true,
             estaciones: [
               {
-                id: 'lec_i', nombre: '- LEC I', hcDesign: 214, hcExpected: 214, actualPresent: 0,
+                id: 'lec_i', nombre: '- LEC I', hcDesign: 196, hcExpected: 196, actualPresent: 0,
                 children: [
-                  { nombre: '110 Frame I', hcDesign: 39, hcExpected: 39, actualPresent: 0 },
+                  { nombre: '110 Frame I', hcDesign: 24, hcExpected: 24, actualPresent: 0 },
                   { nombre: '122 Frame II', hcDesign: 29, hcExpected: 29, actualPresent: 0 },
                   { nombre: '111 Valves', hcDesign: 38, hcExpected: 38, actualPresent: 0 },
                   { nombre: '112 Axles Set', hcDesign: 36, hcExpected: 36, actualPresent: 0 },
-                  { nombre: '119 Axles Trim', hcDesign: 46, hcExpected: 46, actualPresent: 0 },
+                  { nombre: '119 Axles Trim', hcDesign: 43, hcExpected: 43, actualPresent: 0 },
                   { nombre: '48 Chassis Paint', hcDesign: 26, hcExpected: 26, actualPresent: 0 },
                 ]
               },
               {
-                id: 'lec_ii', nombre: '- LEC II', hcDesign: 144, hcExpected: 144, actualPresent: 0,
+                id: 'lec_ii', nombre: '- LEC II', hcDesign: 139, hcExpected: 139, actualPresent: 0,
                 children: [
                   { nombre: '113 Engines Set', hcDesign: 34, hcExpected: 34, actualPresent: 0 },
                   { nombre: '120 Engines Trim', hcDesign: 27, hcExpected: 27, actualPresent: 0 },
-                  { nombre: '121 Tanks Installation', hcDesign: 20, hcExpected: 20, actualPresent: 0 },
-                  { nombre: '114 Cab Set', hcDesign: 26, hcExpected: 26, actualPresent: 0 },
-                  { nombre: '115 Hood Set', hcDesign: 18, hcExpected: 18, actualPresent: 0 },
+                  { nombre: '121 Tanks Installation', hcDesign: 17, hcExpected: 17, actualPresent: 0 },
+                  { nombre: '114 Cab Set', hcDesign: 25, hcExpected: 25, actualPresent: 0 },
+                  { nombre: '115 Hood Set', hcDesign: 17, hcExpected: 17, actualPresent: 0 },
                   { nombre: '116 EOL', hcDesign: 19, hcExpected: 19, actualPresent: 0 },
                 ]
               }
             ]
           },
           {
-            id: 'lem', nombre: '+ LEM', hcDesign: 306, hcExpected: 306, actualPresent: 0, isCritical: true,
+            id: 'lem', nombre: '+ LEM', hcDesign: 280, hcExpected: 280, actualPresent: 0, isCritical: true,
             estaciones: [
               {
                 id: 'lem_i', nombre: '- LEM I', hcDesign: 162, hcExpected: 162, actualPresent: 0,
@@ -75,12 +75,12 @@ const RAMAS_TEMPLATE = [
                 ]
               },
               {
-                id: 'lem_ii', nombre: '- LEM II', hcDesign: 144, hcExpected: 144, actualPresent: 0,
+                id: 'lem_ii', nombre: '- LEM II', hcDesign: 118, hcExpected: 118, actualPresent: 0,
                 children: [
                   { nombre: '35 Cab Trim I', hcDesign: 32, hcExpected: 32, actualPresent: 0 },
-                  { nombre: '41 Cab Trim II', hcDesign: 45, hcExpected: 45, actualPresent: 0 },
-                  { nombre: '47 Sleeper Trim', hcDesign: 9, hcExpected: 9, actualPresent: 0 },
-                  { nombre: '39 Cab Trim 320', hcDesign: 31, hcExpected: 31, actualPresent: 0 },
+                  { nombre: '41 Cab Trim II', hcDesign: 26, hcExpected: 26, actualPresent: 0 },
+                  { nombre: '47 Sleeper Trim', hcDesign: 6, hcExpected: 6, actualPresent: 0 },
+                  { nombre: '39 Cab Trim 320', hcDesign: 27, hcExpected: 27, actualPresent: 0 },
                   { nombre: 'Outbound', hcDesign: 8, hcExpected: 8, actualPresent: 0 },
                   { nombre: '147 LF Conversion', hcDesign: 0, hcExpected: 0, actualPresent: 0 },
                   { nombre: '31 Hood Trim', hcDesign: 9, hcExpected: 9, actualPresent: 0 },
@@ -203,7 +203,8 @@ function applyFactor(nodos, shiftShare, baseAttendance) {
     }
 
     if (isLeaf) {
-      out.hcExpected = Math.round((node.hcDesign || 0) * shiftShare);
+      // Scale expected HC to hit the target of 1112 total (1112 / 1498)
+      out.hcExpected = Math.round((node.hcDesign || 0) * shiftShare * (1112 / HC_DESIGN_TOTAL));
       const noise = (Math.random() * 0.12) - 0.06; 
       let rate = baseAttendance + noise;
       if (rate > 1) rate = 1; 
@@ -217,9 +218,10 @@ function applyFactor(nodos, shiftShare, baseAttendance) {
   return nodos.map(processNode);
 }
 
-// NUEVO: Cálculos para el "Total" (100% de la capacidad de diseño, ~90.1% de asistencia para generar déficit de ~148)
-const areasTotal = applyFactor(LEGACY_AREAS, 1.0, 0.901);
-const ramasTotal = applyFactor(RAMAS_TEMPLATE, 1.0, 0.901);
+// NUEVO: Cálculos para el "Total" (Expected = 1112, Present = 1034)
+// Attendance needed = 1034 / 1112 = 0.9298
+const areasTotal = applyFactor(LEGACY_AREAS, 1.0, 0.9298);
+const ramasTotal = applyFactor(RAMAS_TEMPLATE, 1.0, 0.9298);
 const expectedTotal = areasTotal.reduce((sum, a) => sum + a.hcExpected, 0);
 
 // Cálculos de Turnos
