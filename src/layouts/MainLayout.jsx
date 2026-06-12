@@ -17,7 +17,8 @@ import {
   HelpCircle,
   Play,
   Sun,
-  Moon
+  Moon,
+  Target
 } from 'lucide-react';
 import { UPD_TARGET, HC_DESIGN_TOTAL, HPT_OBJECTIVE } from '../data/constants';
 import kenworthLogo from '../assets/kenworth_logo.png';
@@ -44,7 +45,7 @@ export const MainLayout = ({ children }) => {
   const metrics = useOperationalMetrics(displaySnapshot);
 
   const viewTitles = {
-    'executive': 'Executive Capacity Control',
+    'executive': 'Control Panel',
     'coverage': 'Area Coverage Monitoring',
     'hpt-center': 'HPT Impact Center',
     'hr': 'HC Management & Indicators (HR)',
@@ -52,7 +53,7 @@ export const MainLayout = ({ children }) => {
   };
 
   const navItems = [
-    { id: 'executive', name: 'Executive Control', icon: LayoutDashboard },
+    { id: 'executive', name: 'Control Panel', icon: LayoutDashboard },
     { id: 'coverage', name: 'Area Coverage', icon: Layers },
     { id: 'hpt-center', name: 'HPT Impact Center', icon: TrendingUp },
     { id: 'hr', name: 'HC Management (HR)', icon: Users },
@@ -153,36 +154,7 @@ export const MainLayout = ({ children }) => {
           })}
         </nav>
 
-        {/* 2. FOOTER CON NORTH STAR METRICS (Display Fijo en Sidebar) */}
-        <div className="p-4 border-t border-brand-border bg-black/30 text-xs space-y-3">
-          {sidebarCollapsed ? (
-            <div className="flex flex-col items-center gap-3 text-brand-text-secondary">
-              <div className="cursor-help" title={`UPD Target: ${UPD_TARGET}`}>🎯</div>
-              <div className="cursor-help" title={`HC Diseño: ${HC_DESIGN_TOTAL}`}>👥</div>
-              <div className="cursor-help" title={`HPT Objetivo: ${HPT_OBJECTIVE}`}>⏱️</div>
-            </div>
-          ) : (
-            <>
-              <div className="text-[10px] uppercase font-bold text-brand-text-muted tracking-wider">
-                Master References (Fixed)
-              </div>
-              <div className="space-y-2">
-                <div className="flex justify-between items-center bg-brand-bg/40 px-2 py-1.5 rounded border border-brand-border/40">
-                  <span className="text-brand-text-secondary">UPD Target:</span>
-                  <span className="font-semibold text-brand-accent">{UPD_TARGET.toFixed(1)}</span>
-                </div>
-                <div className="flex justify-between items-center bg-brand-bg/40 px-2 py-1.5 rounded border border-brand-border/40">
-                  <span className="text-brand-text-secondary">Design HC:</span>
-                  <span className="font-semibold text-brand-text-primary">{HC_DESIGN_TOTAL}</span>
-                </div>
-                <div className="flex justify-between items-center bg-brand-bg/40 px-2 py-1.5 rounded border border-brand-border/40">
-                  <span className="text-brand-text-secondary">Target HPT:</span>
-                  <span className="font-semibold text-yellow-500">{HPT_OBJECTIVE.toFixed(1)}</span>
-                </div>
-              </div>
-            </>
-          )}
-        </div>
+
       </aside>
 
       {/* SECCIÓN DERECHA (Header + Contenedor de Dashboards + Filtros) */}
@@ -213,20 +185,49 @@ export const MainLayout = ({ children }) => {
               </div>
             )}
 
-            {/* Quick Metrics Summary */}
-            <div className="hidden md:flex items-center gap-4 text-xs border-r border-brand-border pr-4">
-              <div className="flex items-center gap-1.5">
-                <span className="text-brand-text-secondary">Expected Shift HC:</span>
-                <span className="font-semibold text-brand-text-primary">{metrics.totalExpected}</span>
+            {/* ── Global Shift Truths ── */}
+            <div className="hidden md:flex items-center gap-1 text-xs border-r border-brand-border pr-4">
+
+              {/* UPD Target — fixed constant */}
+              <div className="flex items-center gap-1.5 bg-brand-accent/20 border border-brand-accent/40 rounded px-2.5 py-1 mr-1">
+                <Target size={11} className="text-brand-accent" />
+                <span className="text-brand-text-muted">UPD Target:</span>
+                <span className="font-bold text-brand-accent">{UPD_TARGET.toFixed(0)}</span>
               </div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-brand-text-secondary">Actual Attendance:</span>
-                <span className={`font-semibold ${
+
+              {/* Design HC — fixed constant */}
+              <div className="flex items-center gap-1.5 bg-brand-bg/60 border border-brand-border rounded px-2.5 py-1 mr-1">
+                <Users size={11} className="text-brand-text-muted" />
+                <span className="text-brand-text-muted">Design HC:</span>
+                <span className="font-bold text-brand-text-primary">{HC_DESIGN_TOTAL.toLocaleString()}</span>
+              </div>
+
+              {/* Actual Attendance — live, colour-coded */}
+              <div className={`flex items-center gap-1.5 rounded px-2.5 py-1 border mr-1 ${
+                metrics.coberturaGeneral < 85
+                  ? 'bg-brand-danger/10 border-brand-danger/40'
+                  : metrics.coberturaGeneral < 91
+                  ? 'bg-brand-warning/10 border-brand-warning/40'
+                  : 'bg-brand-success/10 border-brand-success/40'
+              }`}>
+                <span className={`h-1.5 w-1.5 rounded-full ${
+                  metrics.coberturaGeneral < 85 ? 'bg-brand-danger' : metrics.coberturaGeneral < 91 ? 'bg-brand-warning' : 'bg-brand-success'
+                }`} />
+                <span className="text-brand-text-muted">Attendance:</span>
+                <span className={`font-bold ${
                   metrics.coberturaGeneral < 85 ? 'text-brand-danger' : metrics.coberturaGeneral < 91 ? 'text-brand-warning' : 'text-brand-success'
                 }`}>
-                  {metrics.totalPresent} ({metrics.coberturaGeneral.toFixed(1)}%)
+                  {metrics.totalPresent.toLocaleString()} &nbsp;·&nbsp; {metrics.coberturaGeneral.toFixed(1)}%
                 </span>
               </div>
+
+              {/* Target HPT — fixed constant */}
+              <div className="flex items-center gap-1.5 bg-brand-bg/60 border border-brand-border rounded px-2.5 py-1">
+                <Clock size={11} className="text-brand-text-muted" />
+                <span className="text-brand-text-muted">Target HPT:</span>
+                <span className="font-bold text-yellow-500">{HPT_OBJECTIVE.toFixed(1)} hrs</span>
+              </div>
+
             </div>
 
             {/* Actions & Last Refresh */}
@@ -303,7 +304,7 @@ export const MainLayout = ({ children }) => {
                           : 'bg-brand-card border-brand-border text-brand-text-secondary hover:border-brand-text-muted'
                       }`}
                     >
-                      {turno === 'Total' ? 'Total Plant (24 Hrs)' : turno === 'Turno A' ? 'Shift A' : turno === 'Turno B' ? 'Shift B' : 'Shift C'}
+                      {turno === 'Total' ? '9AM:' : turno === 'Turno A' ? 'Shift A' : turno === 'Turno B' ? 'Shift B' : 'Shift C'}
                     </button>
                   ))}
                 </div>

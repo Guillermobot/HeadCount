@@ -348,8 +348,8 @@ export default function HptImpactCenter() {
             label: 'HPT Actual',
             value: `${metrics.hptActual.toFixed(1)} hrs`,
             sub: `${otEnabled ? 'OT enabled — excess hours absorbed' : 'No OT — direct deficit impact'}`,
-            color: hptDelta > 20 ? 'text-red-400' : hptDelta > 8 ? 'text-yellow-400' : 'text-emerald-400',
-            bar:   hptDelta > 20 ? 'bg-red-600'   : hptDelta > 8 ? 'bg-yellow-400'   : 'bg-emerald-500',
+            color: hptDelta > 15 ? 'text-red-400' : hptDelta > 0 ? 'text-yellow-400' : 'text-emerald-400',
+            bar:   hptDelta > 15 ? 'bg-red-600'   : hptDelta > 0 ? 'bg-yellow-400'   : 'bg-emerald-500',
             icon: hptDelta > 0
               ? <TrendingUp   size={14} className="text-red-400"     />
               : <TrendingDown size={14} className="text-emerald-400" />,
@@ -357,10 +357,16 @@ export default function HptImpactCenter() {
           {
             label: 'HPT Variation',
             value: `${hptDelta > 0 ? '+' : ''}${hptDeltaPct.toFixed(1)}%`,
-            sub: `${hptDelta > 0 ? '+' : ''}${hptDelta.toFixed(1)} hrs over target`,
-            color: hptDelta > 20 ? 'text-red-400' : hptDelta > 8 ? 'text-yellow-400' : 'text-emerald-400',
-            bar:   hptDelta > 20 ? 'bg-red-600'   : hptDelta > 8 ? 'bg-yellow-400'   : 'bg-emerald-500',
-            icon: hptDelta > 8
+            sub: hptDelta > 0
+              ? `+${hptDelta.toFixed(1)} hrs over target`
+              : hptDelta < 0
+              ? `${hptDelta.toFixed(1)} hrs under target`
+              : 'On target',
+            color: hptDelta > 15 ? 'text-red-400' : hptDelta > 0 ? 'text-yellow-400' : 'text-emerald-400',
+            bar:   hptDelta > 15 ? 'bg-red-600'   : hptDelta > 0 ? 'bg-yellow-400'   : 'bg-emerald-500',
+            icon: hptDelta > 15
+              ? <AlertTriangle size={14} className="text-red-400"     />
+              : hptDelta > 0
               ? <AlertTriangle size={14} className="text-yellow-400"  />
               : <CheckCircle   size={14} className="text-emerald-400" />,
           },
@@ -387,7 +393,7 @@ export default function HptImpactCenter() {
                 Area Drill-Down
               </h3>
               <p className="text-[10px] text-brand-text-muted mt-0.5">
-                Click any row to drill waterfall chart — {filters?.turno === 'Total' ? 'Total Plant' : filters?.turno === 'Turno A' ? 'Shift A' : filters?.turno === 'Turno B' ? 'Shift B' : filters?.turno === 'Turno C' ? 'Shift C' : 'All shifts'}
+                Click any row to drill waterfall chart — {filters?.turno === 'Total' ? '9AM:' : filters?.turno === 'Turno A' ? 'Shift A' : filters?.turno === 'Turno B' ? 'Shift B' : filters?.turno === 'Turno C' ? 'Shift C' : 'All shifts'}
               </p>
             </div>
             {/* Column legend */}
@@ -534,7 +540,7 @@ export default function HptImpactCenter() {
           </div>
           <div>
             <div className="text-brand-text-muted">HPT Actual</div>
-            <div className={`font-bold text-sm ${hptDelta > 20 ? 'text-red-400' : hptDelta > 8 ? 'text-yellow-400' : 'text-emerald-400'}`}>
+            <div className={`font-bold text-sm ${hptDelta > 15 ? 'text-red-400' : hptDelta > 0 ? 'text-yellow-400' : 'text-emerald-400'}`}>
               {metrics.hptActual.toFixed(1)} hrs
             </div>
           </div>

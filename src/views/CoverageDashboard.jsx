@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { useOperationalMetrics } from '../hooks/useOperationalMetrics';
-import { ChevronDown, ChevronRight, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
+import { HC_DESIGN_TOTAL, HPT_OBJECTIVE } from '../data/constants';
+import { ChevronDown, ChevronRight, AlertTriangle, CheckCircle, XCircle, Zap } from 'lucide-react';
 
 // ── Status config (dark-mode colours) ────────────────────────────
 const STATUS = {
@@ -22,6 +23,90 @@ function StatusPill({ status }) {
     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[9px] font-semibold ${pill}`}>
       <Icon size={9} />{cfg.label}
     </span>
+  );
+}
+
+/** Traffic-light badge for risk panel */
+function StatusBadge({ status, label }) {
+  const map = {
+    success: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
+    warning: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30',
+    danger:  'bg-red-700/10   text-red-400   border-red-700/30',
+  };
+  const dotMap = {
+    success: 'bg-emerald-400',
+    warning: 'bg-yellow-400',
+    danger:  'bg-red-500 animate-pulse',
+  };
+  return (
+    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-[10px] font-semibold ${map[status]}`}>
+      <span className={`h-1.5 w-1.5 rounded-full ${dotMap[status]}`} />
+      {label}
+    </span>
+  );
+}
+
+function getCoverageStatus(coverage) {
+  if (coverage < 85) return 'danger';
+  if (coverage < 91) return 'warning';
+  return 'success';
+}
+const statusLabels = { success: 'Normal', warning: 'Alert', danger: 'Critical' };
+
+/** Risk Impact Table — ranked by coverage gap / HPT impact */
+function RiskImpactTable({ areas, hptObjective, hptActual }) {
+  const ranked = [...areas]
+    .map(a => {
+      const coverage = a.hcExpected > 0 ? (a.actualPresent / a.hcExpected) * 100 : 0;
+      const deficit  = a.hcExpected - a.actualPresent;
+      const areaHptWeight = a.hcDesign / HC_DESIGN_TOTAL;
+      const hptImpact = deficit > 0 ? ((deficit * 8) / 49) * areaHptWeight : 0;
+      const status = getCoverageStatus(coverage);
+      return { ...a, coverage, deficit, hptImpact, status };
+    })
+    .sort((a, b) => b.hptImpact - a.hptImpact);
+
+  const maxImpact = Math.max(...ranked.map(a => a.hptImpact), 1);
+
+  return (
+    <div className="space-y-2.5">
+      {ranked.map((area) => (
+        <div key={area.nombre} className="space-y-1.5">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className={`h-2.5 w-2.5 rounded-sm flex-shrink-0 ${
+                area.status === 'success' ? 'bg-emerald-500' : area.status === 'warning' ? 'bg-yellow-400' : 'bg-red-600'
+              }`} />
+              <span className="text-xs font-medium text-brand-text-primary truncate">{area.nombre}</span>
+              {area.isCritical && <span className="text-[8px] text-red-400">●</span>}
+            </div>
+            <div className="flex items-center gap-3 flex-shrink-0">
+              <span className={`text-xs font-bold tabular-nums ${
+                area.status === 'danger' ? 'text-red-400' : area.status === 'warning' ? 'text-yellow-400' : 'text-emerald-400'
+              }`}>{area.coverage.toFixed(1)}%</span>
+              <span className={`text-[10px] tabular-nums ${area.hptImpact > 2 ? 'text-red-400' : 'text-brand-text-muted'}`}>
+                {area.hptImpact > 0 ? `+${area.hptImpact.toFixed(1)} h` : '—'}
+              </span>
+              <StatusBadge status={area.status} label={statusLabels[area.status]} />
+            </div>
+          </div>
+          <div className="h-1 w-full bg-brand-border rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full ${
+                area.status === 'success' ? 'bg-emerald-500' : area.status === 'warning' ? 'bg-yellow-400' : 'bg-red-600'
+              }`}
+              style={{ width: `${Math.min((area.hptImpact / maxImpact) * 100, 100)}%` }}
+            />
+          </div>
+        </div>
+      ))}
+      <div className="border-t border-brand-border pt-2.5 mt-1 flex justify-between text-[10px] text-brand-text-muted">
+        <span>● = Critical Area (Bottleneck)</span>
+        <span className="text-brand-text-secondary font-semibold">
+          Δ HPT vs Obj: {(hptActual - hptObjective) > 0 ? '+' : ''}{(hptActual - hptObjective).toFixed(1)} h
+        </span>
+      </div>
+    </div>
   );
 }
 
@@ -197,34 +282,10 @@ export default function CoverageDashboard() {
   const metrics = useOperationalMetrics(displaySnapshot);
   const ramas = metrics.ramasEnriched || [];
 
-  const totalDesign = ramas.reduce((s, r) => s + (r.hcDesign || 0), 0);
-  const covered     = metrics.totalPresent;
-  const expected    = metrics.totalExpected;
-  const cov         = expected > 0 ? (covered / expected) * 100 : 0;
-  const covStatus   = cov < 85 ? 'danger' : cov < 91 ? 'warning' : 'success';
-  const covCfg      = STATUS[covStatus];
-
   return (
     <div className="space-y-5">
 
-      {/* KPI strip */}
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
-        {[
-          { label: 'Design HC',        value: totalDesign.toLocaleString(), sub: 'Engineering standard',         color: 'text-blue-400',    bar: 'bg-blue-500' },
-          { label: 'Expected (Shift)', value: expected.toLocaleString(),    sub: 'Shift attendance plan',        color: 'text-brand-text-secondary', bar: 'bg-brand-border' },
-          { label: 'Present HC',       value: covered.toLocaleString(),     sub: `Δ ${covered - expected} vs expected`, color: covCfg.text, bar: covCfg.bar },
-          { label: 'Coverage',         value: `${cov.toFixed(1)}%`,         sub: `Status: ${covCfg.label}`,     color: covCfg.text,        bar: covCfg.bar },
-        ].map((k, i) => (
-          <div key={i} className="relative bg-brand-card border border-brand-border rounded p-4 h-28 flex flex-col justify-between overflow-hidden">
-            <div className={`absolute top-0 left-0 right-0 h-0.5 ${k.bar}`} />
-            <span className="text-[10px] font-bold uppercase tracking-widest text-brand-text-secondary">{k.label}</span>
-            <div className={`text-2xl font-extrabold tracking-tight ${k.color}`}>{k.value}</div>
-            <span className="text-[10px] text-brand-text-muted">{k.sub}</span>
-          </div>
-        ))}
-      </div>
-
-      {/* Hierarchy panel */}
+      {/* Plant Coverage Hierarchy — expanded to fill freed space */}
       <div className="bg-brand-card border border-brand-border rounded">
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-brand-border">
           <div>
@@ -243,6 +304,43 @@ export default function CoverageDashboard() {
         </div>
         <div className="p-5">
           {ramas.map((rama, i) => <RamaRow key={i} node={rama} defaultOpen={i === 0} />)}
+        </div>
+      </div>
+
+      {/* Top Risk by Area — moved from Executive Control */}
+      <div className="bg-brand-card border border-brand-border rounded flex flex-col">
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-brand-border">
+          <div>
+            <h3 className="text-xs font-bold uppercase tracking-widest text-brand-text-secondary">
+              Top Risk by Area
+            </h3>
+            <p className="text-[10px] text-brand-text-muted mt-0.5">
+              Ranked by HPT impact — highest deviation first
+            </p>
+          </div>
+          <div className={`text-[10px] font-bold px-2.5 py-1 rounded border ${
+            metrics.riesgoNivel === 'Critical'
+              ? 'bg-red-900/20 text-red-400 border-red-700/40'
+              : metrics.riesgoNivel === 'High'
+              ? 'bg-yellow-900/20 text-yellow-400 border-yellow-600/40'
+              : 'bg-emerald-900/20 text-emerald-400 border-emerald-700/40'
+          }`}>
+            Overall: {metrics.riesgoNivel}
+          </div>
+        </div>
+        <div className="px-5 py-4">
+          <RiskImpactTable
+            areas={metrics.details || []}
+            hptObjective={HPT_OBJECTIVE}
+            hptActual={metrics.hptActual}
+          />
+        </div>
+        {/* OT Status Footer */}
+        <div className={`px-5 py-3 border-t border-brand-border text-[10px] flex items-center gap-2 ${
+          displaySnapshot?.otHabilitada ? 'text-yellow-400' : 'text-brand-text-muted'
+        }`}>
+          <Zap size={11} className={displaySnapshot?.otHabilitada ? 'text-yellow-400' : 'text-brand-text-muted'} />
+          <span>Overtime: <b>{displaySnapshot?.otHabilitada ? 'Enabled — compensating deficit' : 'Disabled — higher risk'}</b></span>
         </div>
       </div>
 

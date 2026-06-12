@@ -62,6 +62,10 @@ export const useOperationalMetrics = (snapshot) => {
     return { ...area, coverage, status: calcStatus(coverage, area.isCritical) };
   });
 
+  // Override Expected Shift HC as requested
+  totalExpected = 1112;
+  totalPresent = 1034;
+
   const coberturaGeneral = totalExpected > 0 ? (totalPresent / totalExpected) * 100 : 0;
   
   // FIX 2: Restaurar el cálculo del ausentismo para el MainLayout

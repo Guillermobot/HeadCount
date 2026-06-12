@@ -244,16 +244,20 @@ export default function ExecutiveDashboard() {
 
   const hcContratado = displaySnapshot?.hcContratado ?? HC_DESIGN_TOTAL;
 
-  // KPI Row 1 — Headcount chain
-  const kpiRowOne = [
+  // KPI Row 0 — UPD Target
+  const updRow = [
     {
       id: 'upd',
       label: 'UPD Target',
-      value: `${UPD_TARGET.toFixed(0)}`,
+      value: UPD_TARGET.toFixed(0),
       sub: 'Units per day — Fixed',
       icon: Target,
       deltaType: 'fixed',
-    },
+    }
+  ];
+
+  // KPI Row 1 — Headcount chain
+  const headcountRowOne = [
     {
       id: 'hc-design',
       label: 'Design HC',
@@ -266,15 +270,27 @@ export default function ExecutiveDashboard() {
       id: 'hc-contratado',
       label: 'Contracted HC',
       value: hcContratado.toLocaleString(),
-      sub: `Gap: ${HC_DESIGN_TOTAL - hcContratado} vacancies vs design`,
+      sub: 'Total Active Employees',
       icon: Users,
       deltaType: HC_DESIGN_TOTAL - hcContratado > 50 ? 'danger' : HC_DESIGN_TOTAL - hcContratado > 20 ? 'warning' : 'success',
     },
     {
+      id: 'hc-gap',
+      label: 'Differences',
+      value: (hcContratado - HC_DESIGN_TOTAL).toLocaleString(),
+      sub: 'Gap vs Design',
+      icon: AlertTriangle,
+      deltaType: HC_DESIGN_TOTAL - hcContratado > 50 ? 'danger' : 'warning',
+    },
+  ];
+
+  // KPI Row 2 — Real Time Assistance
+  const headcountRowTwo = [
+    {
       id: 'hc-expected',
       label: 'Expected Shift HC',
-      value: (displaySnapshot?.hcExpectedTotal ?? 0).toLocaleString(),
-      sub: `Vs Design: ${HC_DESIGN_TOTAL - (displaySnapshot?.hcExpectedTotal ?? 0)} people`,
+      value: metrics.totalExpected.toLocaleString(),
+      sub: `Vs Design: ${HC_DESIGN_TOTAL - metrics.totalExpected} people`,
       icon: Clock,
       deltaType: 'neutral',
     },
@@ -296,32 +312,28 @@ export default function ExecutiveDashboard() {
     },
   ];
 
-  // KPI Row 2 — HPT & Risk
+  // KPI Row 2 — HPT & Risk (Target HPT lives in header, not here)
   const hptDelta = metrics.hptActual - HPT_OBJECTIVE;
   const kpiRowTwo = [
-    {
-      id: 'hpt-obj',
-      label: 'Target HPT',
-      value: `${HPT_OBJECTIVE.toFixed(1)} hrs`,
-      sub: `Design hrs / 49 UPD`,
-      icon: Target,
-      deltaType: 'fixed',
-    },
     {
       id: 'hpt-actual',
       label: 'Actual HPT',
       value: `${metrics.hptActual.toFixed(1)} hrs`,
       sub: `With ${displaySnapshot?.otHabilitada ? 'OT enabled' : 'No OT'} — active shift`,
       icon: Clock,
-      deltaType: hptDelta > 20 ? 'danger' : hptDelta > 8 ? 'warning' : 'success',
+      deltaType: hptDelta > 15 ? 'danger' : hptDelta > 0 ? 'warning' : 'success',
     },
     {
       id: 'hpt-variacion',
       label: 'HPT Variation',
       value: `${hptDelta > 0 ? '+' : ''}${metrics.hptDiferencia.toFixed(1)}%`,
-      sub: `${hptDelta > 0 ? '+' : ''}${hptDelta.toFixed(1)} hrs over target`,
+      sub: hptDelta > 0
+        ? `+${hptDelta.toFixed(1)} hrs over target`
+        : hptDelta < 0
+        ? `${hptDelta.toFixed(1)} hrs under target`
+        : 'On target',
       icon: hptDelta > 0 ? TrendingUp : hptDelta < 0 ? TrendingDown : Minus,
-      deltaType: hptDelta > 20 ? 'danger' : hptDelta > 8 ? 'warning' : hptDelta > 0 ? 'warning' : 'success',
+      deltaType: hptDelta > 15 ? 'danger' : hptDelta > 0 ? 'warning' : 'success',
     },
     {
       id: 'riesgo',
@@ -336,41 +348,70 @@ export default function ExecutiveDashboard() {
   return (
     <div className="space-y-5">
 
-      {/* ── ROW 1: Headcount KPI Cards ── */}
+      {/* ── ROW 0: UPD Target ── */}
       <section>
         <div className="flex items-center gap-2 mb-2.5">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-brand-text-muted">
-            Headcount Chain
+          <span className="text-[10px] font-bold uppercase tracking-widest text-white">
+            Production Target
           </span>
-          <ChevronRight size={10} className="text-brand-text-muted" />
-          <span className="text-[10px] text-brand-text-muted/60">Design HC → Contracted → Expected → Present → Coverage</span>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3">
-          {kpiRowOne.map((kpi) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+          {updRow.map((kpi) => (
             <KpiCard key={kpi.id} {...kpi} />
           ))}
+        </div>
+      </section>
+
+      {/* ── ROW 1 & 2: Headcount & Assistance KPI Cards ── */}
+      <section className="space-y-4">
+        <div>
+          <div className="flex items-center gap-2 mb-2.5">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-white">
+              Headcount Chain
+            </span>
+            <ChevronRight size={10} className="text-brand-text-muted" />
+            <span className="text-[10px] text-brand-text-muted/60">Design HC → Contracted → Differences</span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {headcountRowOne.map((kpi) => (
+              <KpiCard key={kpi.id} {...kpi} />
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <div className="flex items-center gap-2 mb-2.5">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-white">
+              Real time assistance
+            </span>
+            <ChevronRight size={10} className="text-brand-text-muted" />
+            <span className="text-[10px] text-brand-text-muted/60">Expected → Present → Coverage</span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {headcountRowTwo.map((kpi) => (
+              <KpiCard key={kpi.id} {...kpi} />
+            ))}
+          </div>
         </div>
       </section>
 
       {/* ── ROW 2: HPT & Risk KPI Cards ── */}
       <section>
         <div className="flex items-center gap-2 mb-2.5">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-brand-text-muted">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-white">
             Hours Per Truck (HPT) and Operational Risk
           </span>
         </div>
-        <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-3">
           {kpiRowTwo.map((kpi) => (
             <KpiCard key={kpi.id} {...kpi} />
           ))}
         </div>
       </section>
 
-      {/* ── ROW 3: Heatmap + Risk Table ── */}
-      <section className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-
-        {/* Heatmap — occupies 3/5 */}
-        <div className="lg:col-span-3 bg-brand-card border border-brand-border rounded">
+      {/* ── ROW 3: Heatmap (full width) ── */}
+      <section>
+        <div className="bg-brand-card border border-brand-border rounded">
           {/* Panel header */}
           <div className="flex items-center justify-between px-5 py-3.5 border-b border-brand-border">
             <div>
@@ -382,28 +423,19 @@ export default function ExecutiveDashboard() {
               </p>
             </div>
             <div className="flex items-center gap-2 text-[9px] text-brand-text-muted">
-              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm bg-emerald-500" /> &ge;95%</span>
-              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm bg-yellow-400" /> 90–95%</span>
-              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm bg-red-600" /> &lt;90%</span>
+              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm bg-emerald-500" /> &ge;91%</span>
+              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm bg-yellow-400" /> 85–91%</span>
+              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm bg-red-600" /> &lt;85%</span>
             </div>
           </div>
 
-          <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="p-4 grid grid-cols-2 xl:grid-cols-4 gap-3">
             {(() => {
               const ramas = metrics.ramasEnriched || [];
-
-              // 3 subAreas of ASSEMBLY: ASSEMBLY w/ KF LOGS, KF LOGISTICS, ASSEMBLY INDIRECT
               const assembly = ramas.find(r => r.id === 'assembly');
               const assemblySubAreas = (assembly?.subAreas || []);
-
-              // FABRICATION as a single block (no drill-down here)
               const fabrication = ramas.find(r => r.id === 'fabrication');
-
-              const heatCards = [
-                ...assemblySubAreas,
-                ...(fabrication ? [fabrication] : []),
-              ];
-
+              const heatCards = [...assemblySubAreas, ...(fabrication ? [fabrication] : [])];
               return heatCards.map((area) => (
                 <AreaHeatCard
                   key={area.id || area.nombre}
@@ -414,182 +446,177 @@ export default function ExecutiveDashboard() {
               ));
             })()}
           </div>
-        </div>
 
-        {/* Risk Impact Table — occupies 2/5 */}
-        <div className="lg:col-span-2 bg-brand-card border border-brand-border rounded flex flex-col">
-          <div className="flex items-center justify-between px-5 py-3.5 border-b border-brand-border">
-            <div>
-              <h3 className="text-xs font-bold uppercase tracking-widest text-brand-text-secondary">
-                Top Risk by Area
-              </h3>
-              <p className="text-[10px] text-brand-text-muted mt-0.5">
-                Ranked by HPT impact — highest deviation first
-              </p>
-            </div>
-            <div className={`text-[10px] font-bold px-2.5 py-1 rounded border ${
-              metrics.riesgoNivel === 'Critical'
-                ? 'bg-red-900/20 text-red-400 border-red-700/40'
-                : metrics.riesgoNivel === 'High'
-                ? 'bg-yellow-900/20 text-yellow-400 border-yellow-600/40'
-                : 'bg-emerald-900/20 text-emerald-400 border-emerald-700/40'
-            }`}>
-              {metrics.riesgoNivel}
-            </div>
-          </div>
-          <div className="flex-1 px-5 py-4 overflow-y-auto">
-            <RiskImpactTable
-              areas={metrics.details || []}
-              totalExpected={metrics.totalExpected}
-              hptObjective={HPT_OBJECTIVE}
-              hptActual={metrics.hptActual}
-            />
-          </div>
           {/* OT Status Footer */}
-          <div className={`px-5 py-3 border-t border-brand-border text-[10px] flex items-center gap-2 ${
+          <div className={`px-5 py-2.5 border-t border-brand-border text-[10px] flex items-center gap-2 ${
             displaySnapshot?.otHabilitada ? 'text-yellow-400' : 'text-brand-text-muted'
           }`}>
             <Zap size={11} className={displaySnapshot?.otHabilitada ? 'text-yellow-400' : 'text-brand-text-muted'} />
-            <span>
-              Overtime: <b>{displaySnapshot?.otHabilitada ? 'Enabled — compensating deficit' : 'Disabled — higher risk'}</b>
-            </span>
+            <span>Overtime: <b>{displaySnapshot?.otHabilitada ? 'Enabled — compensating deficit' : 'Disabled — higher risk'}</b></span>
           </div>
         </div>
       </section>
 
-      {/* ── ROW 4: 30-Day Historical Trend ── */}
-      <section className="bg-brand-card border border-brand-border rounded">
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-brand-border">
-          <div>
-            <h3 className="text-xs font-bold uppercase tracking-widest text-brand-text-secondary">
-              Historical Trend — Last 30 Days
-            </h3>
-            <p className="text-[10px] text-brand-text-muted mt-0.5">
-              Operational Coverage (%) and Actual HPT (hrs) — reference line HPT Obj: {HPT_OBJECTIVE}
-            </p>
-          </div>
-          <div className="flex items-center gap-4 text-[9px] text-brand-text-muted">
-            <span className="flex items-center gap-1.5">
-              <span className="h-0.5 w-5 bg-brand-accent inline-block rounded-full" />
-              Coverage %
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="h-0.5 w-5 bg-yellow-400 inline-block rounded-full" />
-              Actual HPT
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="h-0.5 w-5 bg-red-600 inline-block rounded-full border-dashed" style={{ borderTop: '1px dashed' }} />
-              Obj HPT {HPT_OBJECTIVE}
-            </span>
-          </div>
-        </div>
+      {/* ── ROW 4: 5-Day Trend + 30-Day Historical ── */}
+      <section className="grid grid-cols-1 xl:grid-cols-5 gap-4">
 
-        <div className="p-5" style={{ height: 240 }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={historicalDays} margin={{ top: 8, right: 16, bottom: 0, left: 0 }}>
-              <defs>
-                <linearGradient id="covGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#118DFF" stopOpacity={0.25} />
-                  <stop offset="95%" stopColor="#118DFF" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid
-                strokeDasharray="3 3"
-                stroke="#2D2D2D"
-                vertical={false}
-              />
-              <XAxis
-                dataKey="label"
-                tick={{ fontSize: 9, fill: '#605E5C', fontFamily: 'Segoe UI' }}
-                axisLine={{ stroke: '#2D2D2D' }}
-                tickLine={false}
-                interval={3}
-              />
-              <YAxis
-                yAxisId="left"
-                domain={[80, 100]}
-                tick={{ fontSize: 9, fill: '#605E5C', fontFamily: 'Segoe UI' }}
-                axisLine={false}
-                tickLine={false}
-                tickFormatter={(v) => `${v}%`}
-                width={36}
-              />
-              <YAxis
-                yAxisId="right"
-                orientation="right"
-                domain={[230, 300]}
-                tick={{ fontSize: 9, fill: '#605E5C', fontFamily: 'Segoe UI' }}
-                axisLine={false}
-                tickLine={false}
-                tickFormatter={(v) => `${v}h`}
-                width={38}
-              />
-              <Tooltip content={<FabricTooltip />} />
-              <ReferenceLine
-                yAxisId="right"
-                y={HPT_OBJECTIVE}
-                stroke="#A80000"
-                strokeDasharray="4 3"
-                strokeWidth={1.5}
-              />
-              <Area
-                yAxisId="left"
-                type="monotone"
-                dataKey="coberturaReal"
-                name="Coverage"
-                unit="%"
-                stroke="#118DFF"
-                strokeWidth={2}
-                fill="url(#covGrad)"
-                dot={false}
-                activeDot={{ r: 4, strokeWidth: 0, fill: '#118DFF' }}
-              />
-              <Line
-                yAxisId="right"
-                type="monotone"
-                dataKey="actualHpt"
-                name="Actual HPT"
-                unit=" hrs"
-                stroke="#F1C40F"
-                strokeWidth={1.5}
-                dot={false}
-                activeDot={{ r: 4, strokeWidth: 0, fill: '#F1C40F' }}
-              />
-            </ComposedChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Summary stats strip below chart */}
-        <div className="border-t border-brand-border px-5 py-3 grid grid-cols-4 gap-4 text-[10px]">
-          {[
-            {
-              label: '30d Average Coverage',
-              value: `${(historicalDays.reduce((s, d) => s + d.coberturaReal, 0) / historicalDays.length).toFixed(1)}%`,
-              col: 'text-brand-accent'
-            },
-            {
-              label: '30d Average HPT',
-              value: `${(historicalDays.reduce((s, d) => s + d.actualHpt, 0) / historicalDays.length).toFixed(1)} hrs`,
-              col: 'text-yellow-400'
-            },
-            {
-              label: 'Days over Target HPT',
-              value: `${historicalDays.filter(d => d.actualHpt > HPT_OBJECTIVE).length}/${historicalDays.length}`,
-              col: 'text-red-400'
-            },
-            {
-              label: 'Days with Coverage < 90%',
-              value: `${historicalDays.filter(d => d.coberturaReal < 90).length}/${historicalDays.length}`,
-              col: 'text-red-400'
-            }
-          ].map((item, i) => (
-            <div key={i} className="space-y-0.5">
-              <div className="text-brand-text-muted">{item.label}</div>
-              <div className={`font-bold text-sm ${item.col}`}>{item.value}</div>
+        {/* 5-Day Trend sparkline — 2/5 */}
+        <div className="xl:col-span-2 bg-brand-card border border-brand-border rounded flex flex-col">
+          <div className="flex items-center justify-between px-5 py-3.5 border-b border-brand-border">
+            <div>
+              <h3 className="text-xs font-bold uppercase tracking-widest text-brand-text-secondary">
+                5-Day Coverage Trend
+              </h3>
+              <p className="text-[10px] text-brand-text-muted mt-0.5">
+                Last 5 operating days — Coverage % and HPT
+              </p>
             </div>
-          ))}
+            <div className="flex items-center gap-3 text-[9px] text-brand-text-muted">
+              <span className="flex items-center gap-1.5"><span className="h-0.5 w-4 bg-brand-accent inline-block rounded-full" />Cov%</span>
+              <span className="flex items-center gap-1.5"><span className="h-0.5 w-4 bg-yellow-400 inline-block rounded-full" />HPT</span>
+            </div>
+          </div>
+
+          <div className="flex-1 p-4" style={{ minHeight: 200 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <ComposedChart
+                data={historicalDays.slice(-5)}
+                margin={{ top: 8, right: 12, bottom: 0, left: -8 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#2D2D2D" vertical={false} />
+                <XAxis
+                  dataKey="label"
+                  tick={{ fontSize: 9, fill: '#605E5C', fontFamily: 'Segoe UI' }}
+                  axisLine={{ stroke: '#2D2D2D' }}
+                  tickLine={false}
+                />
+                <YAxis
+                  yAxisId="left"
+                  domain={[80, 100]}
+                  tick={{ fontSize: 9, fill: '#605E5C', fontFamily: 'Segoe UI' }}
+                  axisLine={false}
+                  tickLine={false}
+                  tickFormatter={(v) => `${v}%`}
+                  width={32}
+                />
+                <YAxis
+                  yAxisId="right"
+                  orientation="right"
+                  domain={[230, 300]}
+                  tick={{ fontSize: 9, fill: '#605E5C', fontFamily: 'Segoe UI' }}
+                  axisLine={false}
+                  tickLine={false}
+                  tickFormatter={(v) => `${v}h`}
+                  width={34}
+                />
+                <Tooltip content={<FabricTooltip />} />
+                <ReferenceLine yAxisId="right" y={HPT_OBJECTIVE} stroke="#A80000" strokeDasharray="4 3" strokeWidth={1.5} />
+                <Area
+                  yAxisId="left"
+                  type="monotone"
+                  dataKey="coberturaReal"
+                  name="Coverage"
+                  unit="%"
+                  stroke="#118DFF"
+                  strokeWidth={2}
+                  fill="url(#covGrad)"
+                  dot={{ r: 3, fill: '#118DFF', strokeWidth: 0 }}
+                  activeDot={{ r: 5, strokeWidth: 0, fill: '#118DFF' }}
+                />
+                <Line
+                  yAxisId="right"
+                  type="monotone"
+                  dataKey="actualHpt"
+                  name="Actual HPT"
+                  unit=" hrs"
+                  stroke="#F1C40F"
+                  strokeWidth={2}
+                  dot={{ r: 3, fill: '#F1C40F', strokeWidth: 0 }}
+                  activeDot={{ r: 5, strokeWidth: 0, fill: '#F1C40F' }}
+                />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* 5-day summary stats */}
+          <div className="border-t border-brand-border px-5 py-3 grid grid-cols-2 gap-3 text-[10px]">
+            {(() => {
+              const last5 = historicalDays.slice(-5);
+              const avgCov = last5.reduce((s, d) => s + d.coberturaReal, 0) / last5.length;
+              const avgHpt = last5.reduce((s, d) => s + d.actualHpt, 0) / last5.length;
+              const daysOver = last5.filter(d => d.actualHpt > HPT_OBJECTIVE).length;
+              const daysUnder = last5.filter(d => d.coberturaReal < 91).length;
+              return [
+                { label: '5d Avg Coverage', value: `${avgCov.toFixed(1)}%`, col: 'text-brand-accent' },
+                { label: '5d Avg HPT',      value: `${avgHpt.toFixed(1)} h`, col: 'text-yellow-400' },
+                { label: 'Days HPT > Target', value: `${daysOver}/5`,        col: daysOver > 2 ? 'text-red-400' : 'text-brand-text-secondary' },
+                { label: 'Days Cov < 91%',   value: `${daysUnder}/5`,       col: daysUnder > 2 ? 'text-red-400' : 'text-brand-text-secondary' },
+              ].map((s, i) => (
+                <div key={i} className="space-y-0.5">
+                  <div className="text-brand-text-muted">{s.label}</div>
+                  <div className={`font-bold text-sm ${s.col}`}>{s.value}</div>
+                </div>
+              ));
+            })()}
+          </div>
         </div>
+
+        {/* 30-Day Historical chart — 3/5 */}
+        <div className="xl:col-span-3 bg-brand-card border border-brand-border rounded flex flex-col">
+          <div className="flex items-center justify-between px-5 py-3.5 border-b border-brand-border">
+            <div>
+              <h3 className="text-xs font-bold uppercase tracking-widest text-brand-text-secondary">
+                Historical Trend — Last 30 Days
+              </h3>
+              <p className="text-[10px] text-brand-text-muted mt-0.5">
+                Operational Coverage (%) and Actual HPT (hrs) — ref line: {HPT_OBJECTIVE} hrs
+              </p>
+            </div>
+            <div className="flex items-center gap-4 text-[9px] text-brand-text-muted">
+              <span className="flex items-center gap-1.5"><span className="h-0.5 w-5 bg-brand-accent inline-block rounded-full" />Coverage %</span>
+              <span className="flex items-center gap-1.5"><span className="h-0.5 w-5 bg-yellow-400 inline-block rounded-full" />Actual HPT</span>
+            </div>
+          </div>
+
+          <div className="flex-1 p-5" style={{ minHeight: 200 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <ComposedChart data={historicalDays} margin={{ top: 8, right: 16, bottom: 0, left: 0 }}>
+                <defs>
+                  <linearGradient id="covGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%"  stopColor="#118DFF" stopOpacity={0.25} />
+                    <stop offset="95%" stopColor="#118DFF" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#2D2D2D" vertical={false} />
+                <XAxis dataKey="label" tick={{ fontSize: 9, fill: '#605E5C', fontFamily: 'Segoe UI' }} axisLine={{ stroke: '#2D2D2D' }} tickLine={false} interval={3} />
+                <YAxis yAxisId="left" domain={[80, 100]} tick={{ fontSize: 9, fill: '#605E5C', fontFamily: 'Segoe UI' }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v}%`} width={36} />
+                <YAxis yAxisId="right" orientation="right" domain={[230, 300]} tick={{ fontSize: 9, fill: '#605E5C', fontFamily: 'Segoe UI' }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v}h`} width={38} />
+                <Tooltip content={<FabricTooltip />} />
+                <ReferenceLine yAxisId="right" y={HPT_OBJECTIVE} stroke="#A80000" strokeDasharray="4 3" strokeWidth={1.5} />
+                <Area yAxisId="left" type="monotone" dataKey="coberturaReal" name="Coverage" unit="%" stroke="#118DFF" strokeWidth={2} fill="url(#covGrad)" dot={false} activeDot={{ r: 4, strokeWidth: 0, fill: '#118DFF' }} />
+                <Line yAxisId="right" type="monotone" dataKey="actualHpt" name="Actual HPT" unit=" hrs" stroke="#F1C40F" strokeWidth={1.5} dot={false} activeDot={{ r: 4, strokeWidth: 0, fill: '#F1C40F' }} />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Summary stats strip */}
+          <div className="border-t border-brand-border px-5 py-3 grid grid-cols-4 gap-4 text-[10px]">
+            {[
+              { label: '30d Avg Coverage', value: `${(historicalDays.reduce((s,d)=>s+d.coberturaReal,0)/historicalDays.length).toFixed(1)}%`, col: 'text-brand-accent' },
+              { label: '30d Avg HPT',      value: `${(historicalDays.reduce((s,d)=>s+d.actualHpt,0)/historicalDays.length).toFixed(1)} hrs`, col: 'text-yellow-400' },
+              { label: 'Days over Target HPT', value: `${historicalDays.filter(d=>d.actualHpt>HPT_OBJECTIVE).length}/${historicalDays.length}`, col: 'text-red-400' },
+              { label: 'Days Cov < 91%',   value: `${historicalDays.filter(d=>d.coberturaReal<91).length}/${historicalDays.length}`, col: 'text-red-400' },
+            ].map((item, i) => (
+              <div key={i} className="space-y-0.5">
+                <div className="text-brand-text-muted">{item.label}</div>
+                <div className={`font-bold text-sm ${item.col}`}>{item.value}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
       </section>
+
     </div>
   );
 }
