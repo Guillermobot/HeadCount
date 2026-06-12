@@ -19,15 +19,10 @@ export const laborBuckets = [
 ];
 
 const LEGACY_AREAS = [
-  { nombre: "Assembly Line", hcDesign: 380, hcExpected: 380, actualPresent: 0, isCritical: true, children: [] },
-  { nombre: "Major Assemblies", hcDesign: 250, hcExpected: 250, actualPresent: 0, isCritical: true, children: [] },
-  { nombre: "Kenfab", hcDesign: 280, hcExpected: 280, actualPresent: 0, isCritical: true, children: [] },
-  { nombre: "Plastics", hcDesign: 90, hcExpected: 90, actualPresent: 0, isCritical: false, children: [] },
-  { nombre: "Materials / Logistics", hcDesign: 168, hcExpected: 168, actualPresent: 0, isCritical: true, children: [] },
-  { nombre: "Quality", hcDesign: 100, hcExpected: 100, actualPresent: 0, isCritical: false, children: [] },
-  { nombre: "Maintenance", hcDesign: 90, hcExpected: 90, actualPresent: 0, isCritical: false, children: [] },
-  { nombre: "Industrial Engineering & MFC", hcDesign: 70, hcExpected: 70, actualPresent: 0, isCritical: false, children: [] },
-  { nombre: "Support / Facilities / Dir.", hcDesign: 70, hcExpected: 70, actualPresent: 0, isCritical: false, children: [] },
+  { nombre: "KF Logistics", hcDesign: 300, hcExpected: 230, actualPresent: 215, isCritical: true, children: [], absences: { pto: 5, medical: 5, unjustified: 5 }, areaHpt: 242.0 },
+  { nombre: "Assembly indirect", hcDesign: 400, hcExpected: 290, actualPresent: 270, isCritical: false, children: [], absences: { pto: 10, medical: 2, unjustified: 8 }, areaHpt: 246.5 },
+  { nombre: "Fabrication indirect", hcDesign: 300, hcExpected: 220, actualPresent: 210, isCritical: false, children: [], absences: { pto: 2, medical: 6, unjustified: 2 }, areaHpt: 239.8 },
+  { nombre: "Fabrication direct", hcDesign: 498, hcExpected: 372, actualPresent: 339, isCritical: true, children: [], absences: { pto: 15, medical: 8, unjustified: 10 }, areaHpt: 251.2 },
 ];
 
 const RAMAS_TEMPLATE = [

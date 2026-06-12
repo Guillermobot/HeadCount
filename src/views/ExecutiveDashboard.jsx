@@ -156,6 +156,68 @@ function AreaHeatCard({ area, onClick, isSelected }) {
         <span>Real: <b className="text-brand-text-secondary">{area.actualPresent}</b></span>
         <span>Δ: <b className={status === 'success' ? 'text-emerald-400' : 'text-red-400'}>{area.actualPresent - area.hcExpected}</b></span>
       </div>
+
+      {/* HPT & Absences Row */}
+      {(area.areaHpt || (area.absences && area.hcExpected > area.actualPresent)) && (
+        <div className="mt-4 pt-3 border-t border-brand-border flex flex-col gap-3">
+          {area.areaHpt && (
+            <div className="flex justify-between items-center">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-brand-text-muted">Performance</span>
+              <span className="text-[9px] bg-black/20 px-1.5 py-0.5 rounded border border-brand-border text-brand-text-secondary">
+                Proj. HPT: <b className="text-yellow-400">{area.areaHpt}</b>
+              </span>
+            </div>
+          )}
+
+          {(area.absences && area.hcExpected > area.actualPresent) && (() => {
+            const { pto = 0, medical = 0, unjustified = 0 } = area.absences;
+            const sumCat = pto + medical + unjustified;
+            if (sumCat === 0) return null;
+            
+            const pctPto = (pto / sumCat) * 100;
+            const pctMed = (medical / sumCat) * 100;
+            const pctUnj = (unjustified / sumCat) * 100;
+            
+            const conic = `conic-gradient(
+              #3b82f6 0% ${pctPto}%, 
+              #eab308 ${pctPto}% ${pctPto + pctMed}%, 
+              #ef4444 ${pctPto + pctMed}% 100%
+            )`;
+
+            return (
+              <div className="flex flex-col gap-1.5">
+                <span className="text-[9px] font-medium text-brand-text-secondary mb-1">Absence Categories</span>
+                <div className="flex items-center gap-4">
+                  <div 
+                    className="w-10 h-10 rounded-full flex-shrink-0 shadow-sm border border-brand-border/50" 
+                    style={{ background: conic }}
+                  />
+                  <div className="flex flex-col gap-0.5 text-[9px] w-full">
+                    {pto > 0 && (
+                      <div className="flex justify-between items-center">
+                        <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-sm bg-blue-500"/>PTO</span>
+                        <span className="text-brand-text-muted">{pto}</span>
+                      </div>
+                    )}
+                    {medical > 0 && (
+                      <div className="flex justify-between items-center">
+                        <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-sm bg-yellow-500"/>Medical</span>
+                        <span className="text-brand-text-muted">{medical}</span>
+                      </div>
+                    )}
+                    {unjustified > 0 && (
+                      <div className="flex justify-between items-center">
+                        <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-sm bg-red-500"/>Unjustified</span>
+                        <span className="text-brand-text-muted">{unjustified}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+        </div>
+      )}
     </button>
   );
 }
@@ -430,139 +492,25 @@ export default function ExecutiveDashboard() {
           </div>
 
           <div className="p-4 grid grid-cols-2 xl:grid-cols-4 gap-3">
-            {(() => {
-              const ramas = metrics.ramasEnriched || [];
-              const assembly = ramas.find(r => r.id === 'assembly');
-              const assemblySubAreas = (assembly?.subAreas || []);
-              const fabrication = ramas.find(r => r.id === 'fabrication');
-              const heatCards = [...assemblySubAreas, ...(fabrication ? [fabrication] : [])];
-              return heatCards.map((area) => (
-                <AreaHeatCard
-                  key={area.id || area.nombre}
-                  area={area}
-                  isSelected={selectedArea === area.nombre}
-                  onClick={() => setSelectedArea(prev => prev === area.nombre ? null : area.nombre)}
-                />
-              ));
-            })()}
+            {metrics.details.map((area) => (
+              <AreaHeatCard
+                key={area.id || area.nombre}
+                area={area}
+                isSelected={selectedArea === area.nombre}
+                onClick={() => setSelectedArea(prev => prev === area.nombre ? null : area.nombre)}
+              />
+            ))}
           </div>
 
-          {/* OT Status Footer */}
-          <div className={`px-5 py-2.5 border-t border-brand-border text-[10px] flex items-center gap-2 ${
-            displaySnapshot?.otHabilitada ? 'text-yellow-400' : 'text-brand-text-muted'
-          }`}>
-            <Zap size={11} className={displaySnapshot?.otHabilitada ? 'text-yellow-400' : 'text-brand-text-muted'} />
-            <span>Overtime: <b>{displaySnapshot?.otHabilitada ? 'Enabled — compensating deficit' : 'Disabled — higher risk'}</b></span>
-          </div>
+
         </div>
       </section>
 
-      {/* ── ROW 4: 5-Day Trend + 30-Day Historical ── */}
-      <section className="grid grid-cols-1 xl:grid-cols-5 gap-4">
+      {/* ── ROW 4: 30-Day Historical ── */}
+      <section>
 
-        {/* 5-Day Trend sparkline — 2/5 */}
-        <div className="xl:col-span-2 bg-brand-card border border-brand-border rounded flex flex-col">
-          <div className="flex items-center justify-between px-5 py-3.5 border-b border-brand-border">
-            <div>
-              <h3 className="text-xs font-bold uppercase tracking-widest text-brand-text-secondary">
-                5-Day Coverage Trend
-              </h3>
-              <p className="text-[10px] text-brand-text-muted mt-0.5">
-                Last 5 operating days — Coverage % and HPT
-              </p>
-            </div>
-            <div className="flex items-center gap-3 text-[9px] text-brand-text-muted">
-              <span className="flex items-center gap-1.5"><span className="h-0.5 w-4 bg-brand-accent inline-block rounded-full" />Cov%</span>
-              <span className="flex items-center gap-1.5"><span className="h-0.5 w-4 bg-yellow-400 inline-block rounded-full" />HPT</span>
-            </div>
-          </div>
-
-          <div className="flex-1 p-4" style={{ minHeight: 200 }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart
-                data={historicalDays.slice(-5)}
-                margin={{ top: 8, right: 12, bottom: 0, left: -8 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" stroke="#2D2D2D" vertical={false} />
-                <XAxis
-                  dataKey="label"
-                  tick={{ fontSize: 9, fill: '#605E5C', fontFamily: 'Segoe UI' }}
-                  axisLine={{ stroke: '#2D2D2D' }}
-                  tickLine={false}
-                />
-                <YAxis
-                  yAxisId="left"
-                  domain={[80, 100]}
-                  tick={{ fontSize: 9, fill: '#605E5C', fontFamily: 'Segoe UI' }}
-                  axisLine={false}
-                  tickLine={false}
-                  tickFormatter={(v) => `${v}%`}
-                  width={32}
-                />
-                <YAxis
-                  yAxisId="right"
-                  orientation="right"
-                  domain={[230, 300]}
-                  tick={{ fontSize: 9, fill: '#605E5C', fontFamily: 'Segoe UI' }}
-                  axisLine={false}
-                  tickLine={false}
-                  tickFormatter={(v) => `${v}h`}
-                  width={34}
-                />
-                <Tooltip content={<FabricTooltip />} />
-                <ReferenceLine yAxisId="right" y={HPT_OBJECTIVE} stroke="#A80000" strokeDasharray="4 3" strokeWidth={1.5} />
-                <Area
-                  yAxisId="left"
-                  type="monotone"
-                  dataKey="coberturaReal"
-                  name="Coverage"
-                  unit="%"
-                  stroke="#118DFF"
-                  strokeWidth={2}
-                  fill="url(#covGrad)"
-                  dot={{ r: 3, fill: '#118DFF', strokeWidth: 0 }}
-                  activeDot={{ r: 5, strokeWidth: 0, fill: '#118DFF' }}
-                />
-                <Line
-                  yAxisId="right"
-                  type="monotone"
-                  dataKey="actualHpt"
-                  name="Actual HPT"
-                  unit=" hrs"
-                  stroke="#F1C40F"
-                  strokeWidth={2}
-                  dot={{ r: 3, fill: '#F1C40F', strokeWidth: 0 }}
-                  activeDot={{ r: 5, strokeWidth: 0, fill: '#F1C40F' }}
-                />
-              </ComposedChart>
-            </ResponsiveContainer>
-          </div>
-
-          {/* 5-day summary stats */}
-          <div className="border-t border-brand-border px-5 py-3 grid grid-cols-2 gap-3 text-[10px]">
-            {(() => {
-              const last5 = historicalDays.slice(-5);
-              const avgCov = last5.reduce((s, d) => s + d.coberturaReal, 0) / last5.length;
-              const avgHpt = last5.reduce((s, d) => s + d.actualHpt, 0) / last5.length;
-              const daysOver = last5.filter(d => d.actualHpt > HPT_OBJECTIVE).length;
-              const daysUnder = last5.filter(d => d.coberturaReal < 91).length;
-              return [
-                { label: '5d Avg Coverage', value: `${avgCov.toFixed(1)}%`, col: 'text-brand-accent' },
-                { label: '5d Avg HPT',      value: `${avgHpt.toFixed(1)} h`, col: 'text-yellow-400' },
-                { label: 'Days HPT > Target', value: `${daysOver}/5`,        col: daysOver > 2 ? 'text-red-400' : 'text-brand-text-secondary' },
-                { label: 'Days Cov < 91%',   value: `${daysUnder}/5`,       col: daysUnder > 2 ? 'text-red-400' : 'text-brand-text-secondary' },
-              ].map((s, i) => (
-                <div key={i} className="space-y-0.5">
-                  <div className="text-brand-text-muted">{s.label}</div>
-                  <div className={`font-bold text-sm ${s.col}`}>{s.value}</div>
-                </div>
-              ));
-            })()}
-          </div>
-        </div>
-
-        {/* 30-Day Historical chart — 3/5 */}
-        <div className="xl:col-span-3 bg-brand-card border border-brand-border rounded flex flex-col">
+        {/* 30-Day Historical chart */}
+        <div className="bg-brand-card border border-brand-border rounded flex flex-col">
           <div className="flex items-center justify-between px-5 py-3.5 border-b border-brand-border">
             <div>
               <h3 className="text-xs font-bold uppercase tracking-widest text-brand-text-secondary">
@@ -578,7 +526,7 @@ export default function ExecutiveDashboard() {
             </div>
           </div>
 
-          <div className="flex-1 p-5" style={{ minHeight: 200 }}>
+          <div className="p-5" style={{ height: 300 }}>
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart data={historicalDays} margin={{ top: 8, right: 16, bottom: 0, left: 0 }}>
                 <defs>

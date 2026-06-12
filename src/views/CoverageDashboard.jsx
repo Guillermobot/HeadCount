@@ -335,13 +335,7 @@ export default function CoverageDashboard() {
             hptActual={metrics.hptActual}
           />
         </div>
-        {/* OT Status Footer */}
-        <div className={`px-5 py-3 border-t border-brand-border text-[10px] flex items-center gap-2 ${
-          displaySnapshot?.otHabilitada ? 'text-yellow-400' : 'text-brand-text-muted'
-        }`}>
-          <Zap size={11} className={displaySnapshot?.otHabilitada ? 'text-yellow-400' : 'text-brand-text-muted'} />
-          <span>Overtime: <b>{displaySnapshot?.otHabilitada ? 'Enabled — compensating deficit' : 'Disabled — higher risk'}</b></span>
-        </div>
+
       </div>
 
     </div>
