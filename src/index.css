@@ -22,24 +22,24 @@
   --scrollbar-hover:    #3E3E3E;
 }
 
-/* ── Light theme (Power BI-inspired) ── */
+/* ── Light theme (High Contrast) ── */
 html.light {
-  --color-bg:           #F5F5F5;
+  --color-bg:           #E8E8E8;
   --color-card:         #FFFFFF;
-  --color-sidebar:      #FAFAFA;
-  --color-border:       #DCDCDC;
-  --color-accent:       #0078D4;
-  --color-success:      #107C41;
-  --color-warning:      #CC8A00;
-  --color-danger:       #A80000;
-  --color-text-primary: #252423;
-  --color-text-secondary: #605E5C;
-  --color-text-muted:   #A19F9D;
+  --color-sidebar:      #F0F0F0;
+  --color-border:       #A0A0A0; /* Much darker borders for high contrast */
+  --color-accent:       #005A9E; /* Deeper blue */
+  --color-success:      #0D5D30;
+  --color-warning:      #A87000;
+  --color-danger:       #8A0000;
+  --color-text-primary: #000000; /* Pure black */
+  --color-text-secondary: #222222; /* Very dark grey */
+  --color-text-muted:   #444444; /* Darker muted text */
 
   /* Scrollbar */
-  --scrollbar-track:    #F0F0F0;
-  --scrollbar-thumb:    #DCDCDC;
-  --scrollbar-hover:    #C0C0C0;
+  --scrollbar-track:    #E0E0E0;
+  --scrollbar-thumb:    #AAAAAA;
+  --scrollbar-hover:    #888888;
 }
 
 html, body, #root {

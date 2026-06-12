@@ -413,14 +413,28 @@ export default function ExecutiveDashboard() {
       {/* ── ROW 0: UPD Target ── */}
       <section>
         <div className="flex items-center gap-2 mb-2.5">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-white">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-brand-text-secondary">
             Production Target
           </span>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-          {updRow.map((kpi) => (
-            <KpiCard key={kpi.id} {...kpi} />
-          ))}
+        <div className="flex justify-center w-full">
+          <div className="relative bg-brand-card rounded border border-brand-border flex flex-col items-center justify-center p-6 h-32 w-full max-w-md shadow-lg overflow-hidden group hover:border-blue-500/50 transition-all">
+            {/* Top accent bar */}
+            <div className="absolute top-0 left-0 right-0 h-1 bg-blue-500" />
+            
+            <div className="flex flex-col items-center gap-1">
+              <div className="flex items-center gap-2 text-blue-400">
+                <Target size={16} />
+                <span className="text-[11px] font-bold uppercase tracking-widest leading-tight">UPD Target</span>
+              </div>
+              <div className="text-5xl font-black tracking-tighter text-blue-400">
+                {UPD_TARGET.toFixed(0)}
+              </div>
+              <span className="text-xs font-medium text-brand-text-muted mt-1">
+                Units per day — Fixed
+              </span>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -428,7 +442,7 @@ export default function ExecutiveDashboard() {
       <section className="space-y-4">
         <div>
           <div className="flex items-center gap-2 mb-2.5">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-white">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-brand-text-secondary">
               Headcount Chain
             </span>
             <ChevronRight size={10} className="text-brand-text-muted" />
@@ -443,7 +457,7 @@ export default function ExecutiveDashboard() {
 
         <div>
           <div className="flex items-center gap-2 mb-2.5">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-white">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-brand-text-secondary">
               Real time assistance
             </span>
             <ChevronRight size={10} className="text-brand-text-muted" />
@@ -460,7 +474,7 @@ export default function ExecutiveDashboard() {
       {/* ── ROW 2: HPT & Risk KPI Cards ── */}
       <section>
         <div className="flex items-center gap-2 mb-2.5">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-white">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-brand-text-secondary">
             Hours Per Truck (HPT) and Operational Risk
           </span>
         </div>
