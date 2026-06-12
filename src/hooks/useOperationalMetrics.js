@@ -84,9 +84,43 @@ export const useOperationalMetrics = (snapshot) => {
 
   const ramasEnriched = (snapshot.ramas || []).map(enrichDeepNode);
 
+  // Sync Legacy Areas (Heatmap) with the dynamically generated tree nodes
+  // so that the Drill-Down Tree and Heatmap match perfectly.
+  const targetNamesMapping = {
+    "KF Logistics": "KF LOGISTICS",
+    "Assembly Indirect": "ASSEMBLY INDIRECT",
+    "Fabrication direct": "FABRICATION DIRECT",
+    "Fabrication Indirect": "FABRICATION INDIRECT"
+  };
+
+  const lookup = {};
+  function buildLookup(node) {
+    lookup[node.nombre] = node;
+    if (node.subAreas) node.subAreas.forEach(buildLookup);
+    if (node.grupos) node.grupos.forEach(buildLookup);
+    if (node.estaciones) node.estaciones.forEach(buildLookup);
+    if (node.children) node.children.forEach(buildLookup);
+  }
+  ramasEnriched.forEach(buildLookup);
+
+  const syncedAreaCalculations = areaCalculations.map(area => {
+    const treeNode = lookup[targetNamesMapping[area.nombre]];
+    if (treeNode) {
+      return { 
+        ...area, 
+        hcDesign: treeNode.hcDesign,
+        hcExpected: treeNode.hcExpected, 
+        actualPresent: treeNode.actualPresent,
+        coverage: treeNode.coverage,
+        status: treeNode.status
+      };
+    }
+    return area;
+  });
+
   return {
     coberturaGeneral,
-    ausentismoRate, // <- Se exporta correctamente
+    ausentismoRate,
     hptActual,
     hptDiferencia: ((hptActual - HPT_OBJECTIVE) / HPT_OBJECTIVE) * 100,
     riesgoScore: Math.min(100, Math.round(riesgoScore)),
@@ -95,7 +129,7 @@ export const useOperationalMetrics = (snapshot) => {
     totalExpected, 
     totalPresent,
     otHabilitada: snapshot.otHabilitada,
-    details: areaCalculations,  
+    details: syncedAreaCalculations,  
     ramasEnriched               
   };
 };
