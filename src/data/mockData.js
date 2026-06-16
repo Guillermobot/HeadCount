@@ -19,10 +19,10 @@ export const laborBuckets = [
 ];
 
 const LEGACY_AREAS = [
-  { nombre: "KF Logistics", hcDesign: 300, hcExpected: 222, actualPresent: 206, isCritical: true, children: [], absences: { pto: 5, medical: 5, unjustified: 5 }, areaHpt: 242.0 },
-  { nombre: "Assembly Indirect", hcDesign: 400, hcExpected: 297, actualPresent: 276, isCritical: false, children: [], absences: { pto: 10, medical: 2, unjustified: 8 }, areaHpt: 246.5 },
-  { nombre: "Fabrication direct", hcDesign: 498, hcExpected: 370, actualPresent: 344, isCritical: true, children: [], absences: { pto: 15, medical: 8, unjustified: 10 }, areaHpt: 251.2 },
-  { nombre: "Fabrication Indirect", hcDesign: 300, hcExpected: 223, actualPresent: 208, isCritical: false, children: [], absences: { pto: 2, medical: 6, unjustified: 2 }, areaHpt: 239.8 },
+  { nombre: "KF Logistics", hcDesign: 300, hcExpected: 222, actualPresent: 206, isCritical: true, children: [], absences: { turnover: 3, vacations: 5, absenteeism: 6, disability: 2 }, areaHpt: 242.0 },
+  { nombre: "Assembly Indirect", hcDesign: 400, hcExpected: 297, actualPresent: 276, isCritical: false, children: [], absences: { turnover: 5, vacations: 6, absenteeism: 8, disability: 2 }, areaHpt: 246.5 },
+  { nombre: "Fabrication direct", hcDesign: 498, hcExpected: 370, actualPresent: 344, isCritical: true, children: [], absences: { turnover: 6, vacations: 10, absenteeism: 8, disability: 2 }, areaHpt: 251.2 },
+  { nombre: "Fabrication Indirect", hcDesign: 300, hcExpected: 223, actualPresent: 208, isCritical: false, children: [], absences: { turnover: 2, vacations: 6, absenteeism: 5, disability: 2 }, areaHpt: 239.8 },
 ];
 
 const RAMAS_TEMPLATE = [

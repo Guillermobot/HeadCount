@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { useOperationalMetrics } from '../hooks/useOperationalMetrics';
 import { HC_DESIGN_TOTAL, HPT_OBJECTIVE } from '../data/constants';
-import { ChevronDown, ChevronRight, AlertTriangle, CheckCircle, XCircle, Zap } from 'lucide-react';
+import { ChevronDown, ChevronRight, AlertTriangle, CheckCircle, XCircle, Zap, Users } from 'lucide-react';
 
 // ── Status config (dark-mode colours) ────────────────────────────
 const STATUS = {
@@ -59,8 +59,7 @@ function RiskImpactTable({ areas, hptObjective, hptActual }) {
     .map(a => {
       const coverage = a.hcExpected > 0 ? (a.actualPresent / a.hcExpected) * 100 : 0;
       const deficit  = a.hcExpected - a.actualPresent;
-      const areaHptWeight = a.hcDesign / HC_DESIGN_TOTAL;
-      const hptImpact = deficit > 0 ? ((deficit * 8) / 49) * areaHptWeight : 0;
+      const hptImpact = deficit > 0 ? ((deficit * 8 * 0.2) / 49.0) : 0;
       const status = getCoverageStatus(coverage);
       return { ...a, coverage, deficit, hptImpact, status };
     })
@@ -284,6 +283,50 @@ export default function CoverageDashboard() {
 
   return (
     <div className="space-y-5">
+
+      {/* ── ROW 0: Expected vs Present HC Hero ── */}
+      <section>
+        <div className="flex justify-center w-full">
+          <div className="relative bg-brand-card rounded border border-brand-border flex items-center justify-center p-6 h-32 w-full max-w-xl shadow-lg overflow-hidden group hover:border-emerald-500/50 transition-all">
+            {/* Top accent bar */}
+            <div className="absolute top-0 left-0 right-0 h-1 bg-emerald-500" />
+            
+            <div className="flex items-center gap-12 w-full justify-center">
+              {/* Expected HC */}
+              <div className="flex flex-col items-center gap-1 w-32">
+                <div className="flex items-center gap-1.5 text-brand-text-secondary">
+                  <Users size={14} />
+                  <span className="text-[10px] font-bold uppercase tracking-widest leading-tight">Expected Shift</span>
+                </div>
+                <div className="text-4xl font-black tracking-tighter text-brand-text-primary">
+                  {metrics.totalExpected.toLocaleString()}
+                </div>
+              </div>
+
+              {/* Divider */}
+              <div className="h-16 w-px bg-brand-border mx-2" />
+
+              {/* Present HC */}
+              <div className="flex flex-col items-center gap-1 w-32">
+                <div className="flex items-center gap-1.5 text-emerald-500">
+                  <CheckCircle size={14} />
+                  <span className="text-[10px] font-bold uppercase tracking-widest leading-tight">Present HC</span>
+                </div>
+                <div className="text-4xl font-black tracking-tighter text-emerald-500">
+                  {metrics.totalPresent.toLocaleString()}
+                </div>
+              </div>
+            </div>
+            
+            {/* Coverage badge overlay */}
+            <div className="absolute bottom-3 right-4">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-brand-text-muted">
+                Coverage: <span className="text-emerald-500">{metrics.coberturaGeneral.toFixed(1)}%</span>
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* Plant Coverage Hierarchy — expanded to fill freed space */}
       <div className="bg-brand-card border border-brand-border rounded">

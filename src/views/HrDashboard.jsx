@@ -113,20 +113,20 @@ export default function HrDashboard() {
     if (deficit === 0) return [];
 
     const seed = node ? node.nombre.length : 1;
-    const pVacation = 0.3 + (seed % 3) * 0.1;
-    const pMedical = 0.2 + (seed % 2) * 0.1;
-    const pScheduled = 0.1;
+    const pTurnover = 0.15 + (seed % 2) * 0.05;
+    const pVacations = 0.3 + (seed % 3) * 0.1;
+    const pDisability = 0.1 + (seed % 2) * 0.05;
     
-    const vacation = Math.floor(deficit * pVacation);
-    const medical = Math.floor(deficit * pMedical);
-    const scheduled = Math.floor(deficit * pScheduled);
-    const unexcused = deficit - vacation - medical - scheduled;
+    const turnover = Math.floor(deficit * pTurnover);
+    const vacations = Math.floor(deficit * pVacations);
+    const disability = Math.floor(deficit * pDisability);
+    const absenteeism = Math.max(0, deficit - turnover - vacations - disability);
 
     return [
-      { name: 'Vacation', value: vacation, fill: '#107C41' },
-      { name: 'Medical Leave', value: medical, fill: '#E66C37' },
-      { name: 'Unexcused Absence', value: unexcused, fill: '#D64550' },
-      { name: 'Scheduled Leave', value: scheduled, fill: '#118DFF' },
+      { name: 'Turnover', value: turnover, fill: '#8b5cf6' },
+      { name: 'Vacations', value: vacations, fill: '#3b82f6' },
+      { name: 'Absenteeism', value: absenteeism, fill: '#ef4444' },
+      { name: 'Disability', value: disability, fill: '#eab308' },
     ].filter(d => d.value > 0);
   };
 

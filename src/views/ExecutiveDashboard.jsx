@@ -242,18 +242,20 @@ function AreaHeatCard({ area, onClick, isSelected }) {
           {area.absences &&
             area.hcExpected > area.actualPresent &&
             (() => {
-              const { pto = 0, medical = 0, unjustified = 0 } = area.absences;
-              const sumCat = pto + medical + unjustified;
+              const { turnover = 0, vacations = 0, absenteeism = 0, disability = 0 } = area.absences;
+              const sumCat = turnover + vacations + absenteeism + disability;
               if (sumCat === 0) return null;
 
-              const pctPto = (pto / sumCat) * 100;
-              const pctMed = (medical / sumCat) * 100;
-              const pctUnj = (unjustified / sumCat) * 100;
+              const pctTurn = (turnover / sumCat) * 100;
+              const pctVac = (vacations / sumCat) * 100;
+              const pctAbs = (absenteeism / sumCat) * 100;
+              const pctDis = (disability / sumCat) * 100;
 
               const conic = `conic-gradient(
-              #3b82f6 0% ${pctPto}%, 
-              #eab308 ${pctPto}% ${pctPto + pctMed}%, 
-              #ef4444 ${pctPto + pctMed}% 100%
+              #8b5cf6 0% ${pctTurn}%, 
+              #3b82f6 ${pctTurn}% ${pctTurn + pctVac}%, 
+              #ef4444 ${pctTurn + pctVac}% ${pctTurn + pctVac + pctAbs}%,
+              #eab308 ${pctTurn + pctVac + pctAbs}% 100%
             )`;
 
               return (
@@ -267,35 +269,40 @@ function AreaHeatCard({ area, onClick, isSelected }) {
                       style={{ background: conic }}
                     />
                     <div className="flex flex-col gap-0.5 text-[9px] w-full">
-                      {pto > 0 && (
+                      {turnover > 0 && (
+                        <div className="flex justify-between items-center">
+                          <span className="flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-sm bg-purple-500" />
+                            Turnover
+                          </span>
+                          <span className="text-brand-text-muted">{turnover}</span>
+                        </div>
+                      )}
+                      {vacations > 0 && (
                         <div className="flex justify-between items-center">
                           <span className="flex items-center gap-1.5">
                             <span className="w-2 h-2 rounded-sm bg-blue-500" />
-                            PTO
+                            Vacations
                           </span>
-                          <span className="text-brand-text-muted">{pto}</span>
+                          <span className="text-brand-text-muted">{vacations}</span>
                         </div>
                       )}
-                      {medical > 0 && (
-                        <div className="flex justify-between items-center">
-                          <span className="flex items-center gap-1.5">
-                            <span className="w-2 h-2 rounded-sm bg-yellow-500" />
-                            Medical
-                          </span>
-                          <span className="text-brand-text-muted">
-                            {medical}
-                          </span>
-                        </div>
-                      )}
-                      {unjustified > 0 && (
+                      {absenteeism > 0 && (
                         <div className="flex justify-between items-center">
                           <span className="flex items-center gap-1.5">
                             <span className="w-2 h-2 rounded-sm bg-red-500" />
-                            Unjustified
+                            Absenteeism
                           </span>
-                          <span className="text-brand-text-muted">
-                            {unjustified}
+                          <span className="text-brand-text-muted">{absenteeism}</span>
+                        </div>
+                      )}
+                      {disability > 0 && (
+                        <div className="flex justify-between items-center">
+                          <span className="flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-sm bg-yellow-500" />
+                            Disability
                           </span>
+                          <span className="text-brand-text-muted">{disability}</span>
                         </div>
                       )}
                     </div>
@@ -316,8 +323,7 @@ function RiskImpactTable({ areas, totalExpected, hptObjective, hptActual }) {
       const coverage =
         a.hcExpected > 0 ? (a.actualPresent / a.hcExpected) * 100 : 0;
       const deficit = a.hcExpected - a.actualPresent;
-      const areaHptWeight = a.hcDesign / HC_DESIGN_TOTAL;
-      const hptImpact = deficit > 0 ? ((deficit * 8) / 49) * areaHptWeight : 0;
+      const hptImpact = deficit > 0 ? ((deficit * 8 * 0.2) / 49.0) : 0;
       const status = getCoverageStatus(coverage, a.isCritical);
       return { ...a, coverage, deficit, hptImpact, status };
     })
@@ -598,8 +604,8 @@ export default function ExecutiveDashboard() {
 
       {/* ── ROW 1 & 2: Headcount & Assistance KPI Cards ── */}
       <section className="space-y-4">
-        <div>
-          <div className="flex items-center gap-2 mb-2.5">
+        <div className="bg-brand-surface border border-brand-border rounded-lg p-4 shadow-sm">
+          <div className="flex items-center gap-2 mb-3 border-b border-brand-border/50 pb-2">
             <span className="text-[10px] font-bold uppercase tracking-widest text-brand-text-secondary">
               Headcount Chain
             </span>
@@ -615,8 +621,8 @@ export default function ExecutiveDashboard() {
           </div>
         </div>
 
-        <div>
-          <div className="flex items-center gap-2 mb-2.5">
+        <div className="bg-brand-surface border border-brand-border rounded-lg p-4 shadow-sm mt-4">
+          <div className="flex items-center gap-2 mb-3 border-b border-brand-border/50 pb-2">
             <span className="text-[10px] font-bold uppercase tracking-widest text-brand-text-secondary">
               Real time assistance
             </span>
@@ -635,15 +641,17 @@ export default function ExecutiveDashboard() {
 
       {/* ── ROW 2: HPT & Risk KPI Cards ── */}
       <section>
-        <div className="flex items-center gap-2 mb-2.5">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-brand-text-secondary">
-            Hours Per Truck (HPT) and Operational Risk
-          </span>
-        </div>
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-3">
-          {kpiRowTwo.map((kpi) => (
-            <KpiCard key={kpi.id} {...kpi} />
-          ))}
+        <div className="bg-brand-surface border border-brand-border rounded-lg p-4 shadow-sm mt-4">
+          <div className="flex items-center gap-2 mb-3 border-b border-brand-border/50 pb-2">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-brand-text-secondary">
+              Hours Per Truck (HPT) and Operational Risk
+            </span>
+          </div>
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-3">
+            {kpiRowTwo.map((kpi) => (
+              <KpiCard key={kpi.id} {...kpi} />
+            ))}
+          </div>
         </div>
       </section>
 
@@ -656,6 +664,9 @@ export default function ExecutiveDashboard() {
               <h3 className="text-xs font-bold uppercase tracking-widest text-brand-text-secondary">
                 Operational Plant Heatmap
               </h3>
+              <div className="text-[10px] text-brand-text-muted mt-1">
+                {metrics.dynamicHptObjective.toFixed(1)} hrs
+              </div>
               <p className="text-[10px] text-brand-text-muted mt-0.5">
                 Coverage vs Expected HC by Area — active shift
               </p>
@@ -701,7 +712,7 @@ export default function ExecutiveDashboard() {
               </h3>
               <p className="text-[10px] text-brand-text-muted mt-0.5">
                 Operational Coverage (%) and Actual HPT (hrs) — ref line:{" "}
-                {HPT_OBJECTIVE} hrs
+                {metrics.dynamicHptObjective.toFixed(1)} hrs
               </p>
             </div>
             <div className="flex items-center gap-4 text-[9px] text-brand-text-muted">
@@ -774,7 +785,7 @@ export default function ExecutiveDashboard() {
                 <Tooltip content={<FabricTooltip />} />
                 <ReferenceLine
                   yAxisId="right"
-                  y={HPT_OBJECTIVE}
+                  y={metrics.dynamicHptObjective}
                   stroke="#A80000"
                   strokeDasharray="4 3"
                   strokeWidth={1.5}
@@ -828,7 +839,7 @@ export default function ExecutiveDashboard() {
               {
                 label: "Days over Target HPT",
                 value: `${
-                  historicalDays.filter((d) => d.actualHpt > HPT_OBJECTIVE)
+                  historicalDays.filter((d) => d.actualHpt > metrics.dynamicHptObjective)
                     .length
                 }/${historicalDays.length}`,
                 col: "text-red-400",

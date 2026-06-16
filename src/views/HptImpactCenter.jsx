@@ -90,10 +90,8 @@ function calcNodeMetrics(node, otEnabled) {
   const attendance     = expected > 0 ? (present / expected) * 100 : 100;
   const opCapacity     = design   > 0 ? (present / design)   * 100 : 100;
   const deficit        = Math.max(0, expected - present);
-  const designWeight   = HC_DESIGN_TOTAL > 0 ? design / HC_DESIGN_TOTAL : 0;
-  const hptImpact      = otEnabled
-    ? (deficit * HOURS_PER_SHIFT * 1.2 * designWeight) / 49
-    : 0;
+  // The objective already includes 1.0 of the person's hours. The variance is only the 0.2 penalty.
+  const hptImpact      = (deficit * HOURS_PER_SHIFT * 0.2) / 49.0;
 
   const status =
     attendance < 85 ? 'danger' :
@@ -256,7 +254,7 @@ export default function HptImpactCenter() {
   const metrics = useOperationalMetrics(displaySnapshot);
   const otEnabled = !!displaySnapshot?.otHabilitada;
 
-  const hptDelta    = metrics.hptActual - HPT_OBJECTIVE;
+  const hptDelta    = metrics.hptActual - metrics.dynamicHptObjective;
   const hptDeltaPct = metrics.hptDiferencia;
 
   // Drill-down state
@@ -338,8 +336,8 @@ export default function HptImpactCenter() {
         {[
           {
             label: 'HPT Objective',
-            value: `${HPT_OBJECTIVE.toFixed(1)} hrs`,
-            sub: 'Fixed standard — 1,498 HC × 8h ÷ 49 UPD',
+            value: `${metrics.dynamicHptObjective.toFixed(1)} hrs`,
+            sub: `Dynamic standard — ${metrics.totalExpected.toLocaleString()} HC × 8h ÷ 49 UPD`,
             color: 'text-blue-400',
             bar: 'bg-blue-500',
             icon: <Minus size={14} className="text-blue-400" />,
@@ -347,7 +345,7 @@ export default function HptImpactCenter() {
           {
             label: 'HPT Actual',
             value: `${metrics.hptActual.toFixed(1)} hrs`,
-            sub: `${otEnabled ? 'OT enabled — excess hours absorbed' : 'No OT — direct deficit impact'}`,
+            sub: 'Actual hours per truck based on attendance',
             color: hptDelta > 15 ? 'text-red-400' : hptDelta > 0 ? 'text-yellow-400' : 'text-emerald-400',
             bar:   hptDelta > 15 ? 'bg-red-600'   : hptDelta > 0 ? 'bg-yellow-400'   : 'bg-emerald-500',
             icon: hptDelta > 0

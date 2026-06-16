@@ -39,6 +39,7 @@ export const useOperationalMetrics = (snapshot) => {
     return {
       coberturaGeneral: 0,
       hptActual: HPT_OBJECTIVE,
+      dynamicHptObjective: HPT_OBJECTIVE,
       hptDiferencia: 0,
       riesgoScore: 0,
       riesgoNivel: "Low",
@@ -71,13 +72,18 @@ export const useOperationalMetrics = (snapshot) => {
   // FIX 2: Restaurar el cálculo del ausentismo para el MainLayout
   const ausentismoRate = totalExpected > 0 ? ((totalExpected - totalPresent) / totalExpected) * 100 : 0;
   
-  let hptActual = HPT_OBJECTIVE;
-  if (snapshot.otHabilitada) {
-    const missingHours = Math.max(0, totalExpected - totalPresent) * HOURS_PER_SHIFT;
-    hptActual = ((totalPresent * HOURS_PER_SHIFT) + (missingHours * OT_INEFFICIENCY_FACTOR)) / 49.0;
-  } else {
-    hptActual = (totalPresent * HOURS_PER_SHIFT) / 49.0;
-  }
+  // Dynamic HPT Objective based on the daily plan (1112 HC) instead of max design capacity (1498)
+  const dynamicHptObjective = totalExpected > 0 ? (totalExpected * HOURS_PER_SHIFT) / 49.0 : HPT_OBJECTIVE;
+
+  // HPT Actual calculation
+  // We assume missing people force the plant to consume extra hours (overtime/slowdowns) to hit the 49 truck target.
+  const missingPeople = Math.max(0, totalExpected - totalPresent);
+  const lostHours = missingPeople * HOURS_PER_SHIFT;
+  // It takes slightly more hours to recover lost work due to fatigue/inefficiency (e.g. 1.2x penalty)
+  const penaltyHours = lostHours * 1.2; 
+  
+  const totalEffectiveHours = (totalPresent * HOURS_PER_SHIFT) + penaltyHours;
+  const hptActual = totalEffectiveHours / 49.0;
 
   let riesgoScore = Math.max(0, 100 - coberturaGeneral);
   if (!snapshot.otHabilitada && coberturaGeneral < 95) riesgoScore += 25;
@@ -122,7 +128,8 @@ export const useOperationalMetrics = (snapshot) => {
     coberturaGeneral,
     ausentismoRate,
     hptActual,
-    hptDiferencia: ((hptActual - HPT_OBJECTIVE) / HPT_OBJECTIVE) * 100,
+    dynamicHptObjective,
+    hptDiferencia: ((hptActual - dynamicHptObjective) / dynamicHptObjective) * 100,
     riesgoScore: Math.min(100, Math.round(riesgoScore)),
     riesgoNivel: riesgoScore >= 70 ? "Critical" : riesgoScore >= 45 ? "High" : "Low",
     totalDesign, 
